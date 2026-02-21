@@ -1,0 +1,56 @@
+---
+layout: default
+---
+
+<!-- Include Block -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<link  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<link href="{{site.url}}{{ site.baseurl }}/public/css/map.css" rel="stylesheet"/>
+
+<script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@3.10.0/dist/v3/webpack/bundle/georaster-layer-for-leaflet.min.js"></script>
+
+<!-- Add the Bing plugin script -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet-bing-layer@3.3.1/leaflet-bing-layer.min.js"></script>
+
+<!-- add plugin leaflet-locatecontrol: A leaflet control to geolocate the user https://github.com/domoritz/leaflet-locatecontrol -->
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.min.js"></script>
+
+
+
+<!-- Pass variables from page frontmatter to Javascript -->
+<script>
+  const locateControlEnabled = {{ page.locate_control | default: "false" | jsonify }};
+  const centerLat = {{ page.center_lat | default: "41.355946" | jsonify }};
+  const centerLng = {{ page.center_lng | default: "14.370868" | jsonify }};
+  const zoomLevel = {{ page.zoom | default: "18" | jsonify }};
+  const base_url = "{{ site.url }}{{ site.baseurl }}";
+  const map_id = "{{ page.id | default: "map" }}";
+  const map_title = "{{ page.title | default: "Map" }}";
+  const map_description = "{{ page.description | default: "Map description" }}";
+  const map_data = {{ page.data | default: "[]" | jsonify }};
+  const photo_url = "{{ page.photo_url }}";
+  const layerControlCollapsed = true;
+  const mapWidth = "{{ page.map_width | default: "400px" }}";
+  const mapHeight = "{{ page.map_height | default: "300px" }}";
+</script>
+
+<div class="page">
+  <h1 class="page-title">{{ page.title }}</h1>
+  {{ content }}
+  <div class="page">
+    <div class="folium-map" id="map" style="width: {{ page.map_width | default: "400px" }}; height: {{ page.map_height | default: "300px" }};"></div>
+  </div>
+</div>
+
+<!-- Include the external map javascript code -->
+<script src="{{ site.baseurl }}/public/js/myscript.js"></script>
+

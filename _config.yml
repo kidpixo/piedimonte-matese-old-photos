@@ -1,22 +1,37 @@
 # Setup
-title:               Lanyon
-tagline:             'A Jekyll theme'
+title:               'Il Cotonificio Egg di Piedimonte Matese'
+tagline:             'Una Storia Industriale e Sociale Attraverso le Mappe'
 description:         'A reserved <a href="https://jekyllrb.com" target="_blank">Jekyll</a> theme that places the utmost gravity on content with a hidden drawer. Made by <a href="https://twitter.com/mdo" target="_blank">@mdo</a>.'
-url:                 http://lanyon.getpoole.com
+# url:                'https://kidpixo.github.io'
+# baseurl:            '/leaflet-test'
+url:                 'http://localhost'
 baseurl:             ''
-paginate:            5
+
 permalink:           pretty
 
 # About/contact
 author:
-  name:              Mark Otto
-  url:               https://twitter.com/mdo
-  email:             markdotto@gmail.com
-
-# Gems
-plugins:
-  - jekyll-paginate
+  name:              Mario D'Amore
+  # url:               https://twitter.com/mdo
+  email:             maariodamore77@gmail.com
 
 # Custom vars
 version:             1.1.0
-google_analytics_id: #UA-XXXX-Y
+# google_analytics_id: #UA-XXXX-Y
+
+collections:
+  photos:
+    output: true
+    permalink: /archive/:name/
+  topics:
+    output: true
+    permalink: /topics/:name/
+
+# Explicitly exclude the raw data so Jekyll doesn't try to build it
+exclude:
+  - raw_data/
+  - scripts/
+  - vendor/
+  - Makefile
+  - Dockerfile
+  - docker-compose.yml
