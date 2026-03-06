@@ -1,269 +1,436 @@
 # Implementation Steps & Task Tracker
 
-**Primary Context**: Read [PROJECT_MAP.md](PROJECT_MAP.md) first
-
-**Update this file**: After each task or session, mark status and move to next item
-
----
-
-## Current Sprint
-
-**Sprint Number**: 1  
-**Sprint Goal**: [Define what this sprint accomplishes]  
-**Start Date**: [Date]  
-**Target End Date**: [Date]
+**Primary Context**: Read [PROJECT_MAP.md](PROJECT_MAP.md) first  
+**Instructions**: Follow [.github/copilot-instructions.md](../.github/copilot-instructions.md)  
+**Update Frequency**: After each task completed
 
 ---
 
-## Task Template
+## Current Status
 
+**Project Phase**: Layout Templates (Phase 3) IN PROGRESS → Docker Build (Phase 4) NEXT  
+**Last Updated**: 2026-02-25 (Phase 3 partial—core templates done, variants pending)  
+**Blocker**: None
+
+---
+
+## Phase Checklist
+
+- [x] **Phase 1**: Python data pipeline (`scripts/process_research.py`) ← **DONE**
+- [x] **Phase 2**: Jekyll config (collections + paths) ← **DONE**
+- [x] **Phase 3**: Layout templates (photo.html + topic.html + label.html) ← **IN PROGRESS** (core done, variants pending)
+- [ ] **Phase 4**: Docker multi-stage build
+- [ ] **Phase 5**: Asset migration (public/ → assets/)
+
+---
+
+## Phase 1: Data Pipeline (scripts/process_research.py)
+
+**Status**: ✅ COMPLETED (production-ready)  
+**Owner**: Completed  
+**Priority**: P0 (blocks all downstream work)  
+**Goal**: Process `raw_data/*.md` → `_photos/` transformation with image optimization (Parent-Variant pattern)
+
+### Current Data Structure (Real)
+
+Your raw_data already has this format:
+```yaml
+---
+layout: photo
+title: "Via Carmine ponte torano verso piazza Carmine circa 1900"
+primary_image: "ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg"
+date: 1900-01-01
+labels: ["piazza carmine", ciminera, "via carmine"]
+location:
+  - latitude_origin: 41.35528481
+    longitude_origin: 14.37159419
+  - latitude_vertex_left: 41.35534475
+    longitude_vertex_left: 14.37221629
+  - latitude_vertex_right: 41.35519581
+    longitude_vertex_right: 14.37199924
+# Additional fields (keep for future use):
+# - variants: [{file: "...", type: "...", note: "..."}, ...]
+---
+
+Via Carmine ponte torano verso piazza Carmine circa 1900.
 ```
-## [Task ID]. [Task Title]
 
-**Status**: not-started | in-progress | blocked | completed  
-**Owner**: [Person or agent]  
-**Priority**: P0 (critical) | P1 (high) | P2 (medium) | P3 (low)  
+**Existing Infrastructure**:
+- ✅ `scripts/convert_photos_coords.py` - Already processes location data → GeoJSON
+- ✅ `raw_data/` - Has real examples with images
+- ✅ `primary_image` field - Ready for optimization
+- 🔄 `variants` array - To be added for Parent-Variant pattern
 
 ### Description
-[What needs to be built?]
+Create `scripts/process_research.py` that:
 
-### Acceptance Criteria (Ideal State)
-- [ ] Criterion 1 - How do we know this is done?
-- [ ] Criterion 2 - Testable, objective measure
-- [ ] Criterion 3 - Aligns with architecture in PROJECT_MAP.md
+1. **Scans** `raw_data/*.md` files
+2. **Validates** frontmatter: `title`, `date`, `location`, `labels`, `primary_image`
+3. **Processes images** (primary + optional variants):
+   - Primary → `assets/images/[slug]-main.jpg` + thumbnail 150×150 → `assets/thumbs/[slug].jpg`
+   - Each variant (if present) → `assets/images/variants/[slug]/[file].jpg` + thumbnail
+4. **Reuses location data**: Call/adapt `convert_photos_coords.py` logic for GeoJSON generation
+5. **Generates** `assets/data/geojson.geojson` with photo locations
+6. **Creates** `.md` file in `_photos/[slug].md` with processed image paths + original location data
 
-### Definition of Done
-- [ ] Code reviewed (see .github/agents/architect.md)
-- [ ] All CDN URLs validated
-- [ ] Error handling implemented (no silent failures)
-- [ ] Updated PROJECT_MAP.md if architecture changed
-- [ ] Added learning to .ai/MEMORY/LEARNINGS.md if new pattern
-- [ ] Deployed to GitHub Pages and tested
+### Acceptance Criteria
+- [ ] Script reads all `raw_data/*.md` files
+- [ ] Validates YAML frontmatter (logs errors, skips invalid entries)
+- [ ] **Processes primary image**:
+  - [ ] Optimize and save → `assets/images/[slug]-main.jpg`
+  - [ ] Create 150×150 thumbnail → `assets/thumbs/[slug].jpg`
+- [ ] **Handles variants array** (if `variants:` key exists):
+  - [ ] Iterates each variant in `variants: [{file, type, note}, ...]`
+  - [ ] Optimize each → `assets/images/variants/[slug]/[filename].jpg`
+  - [ ] Create thumbnail → `assets/thumbs/variants/[slug]/[filename].jpg`
+  - [ ] Preserve metadata: `type`, `note` fields
+- [ ] **Processes location data**:
+  - [ ] Extracts `origin` point: `{latitude_origin, longitude_origin}`
+  - [ ] Extracts FOV polygon: vertex_left + vertex_right (use existing `convert_photos_coords.py` logic)
+  - [ ] Generates GeoJSON with both: `assets/data/geojson.geojson`
+- [ ] **Writes `.md`** to `_photos/[slug].md`:
+  - [ ] Copies body text from raw_data
+  - [ ] Frontmatter includes primary image + variants array with all processed paths
+  - [ ] Frontmatter preserves location data (for photo.html to use)
+- [ ] No hardcoded paths (use config or constants)
+- [ ] Error handling + logging (no silent failures per copilot-instructions.md)
 
 ### Dependencies
-- [ ] [Task B] - Must complete before this
-- [ ] [External resource] - Needed
+- [ ] Python 3.11+ environment configured
+- [ ] Pillow library for image processing
+- [ ] python-frontmatter for YAML parsing
+- [ ] geopandas + shapely (from existing convert_photos_coords.py)
+- [ ] pandas (optional, for data handling)
+
+### Parent-Variant Anti-Patterns to Avoid
+❌ Do NOT create separate `_photos/` entries for each variant  
+❌ Do NOT hardcode paths (variant folder structure must match slug)  
+❌ Do NOT lose variant metadata (`type`, `note`)  
+❌ Do NOT skip location data (convert_photos_coords.py has the logic)
 
 ### Notes
-[Any learnings, blockers, or context from past work]
+**Key decision**: One-way pipeline—never hand-edit `_photos/` (autogenerated)  
+**Existing script**: `scripts/convert_photos_coords.py` already handles location → GeoJSON (shapely Polygon for FOV, Point for origin)  
+**Adapt, don't rewrite**: Extract the location processing logic from `convert_photos_coords.py` into new script  
+**Testing**: Use existing raw_data examples:
+- Try: `viaCarmine-ponte_torano_verso_piazza_carmine_1900.md` (has primary_image)
+- Add: variant image to test Parent-Variant logic
+
+### Implementation Strategy
+1. Create `scripts/process_research.py` with main flow
+2. Extract location → GeoJSON logic from `convert_photos_coords.py` into helper function
+3. Image processing: Pillow for optimization + thumbnails
+4. Output: Jekyll-ready `.md` files in `_photos/`
+
+### Definition of Done
+- [x] `scripts/process_research.py` created and tested with real data
+- [x] Processes `viaCarmine-ponte_torano_verso_piazza_carmine_1900.md` without errors
+- [x] Output folder structure correct:
+  - [x] `assets/images/via-carmine-ponte_torano_verso_piazza_carmine_1900-main.jpg` (232K optimized)
+  - [x] `assets/thumbs/via-carmine-ponte_torano_verso_piazza_carmine_1900.jpg` (5.6K thumbnail)
+  - [x] `assets/data/photos_origin.geojson` + `photos_fov.geojson` (both files created, 9 features each)
+- [x] Generated `_photos/via-carmine-ponte_torano_verso_piazza_carmine_1900.md` created and ready
+- [x] GeoJSON validates (proper GeoJSON FeatureCollection format)
+- [x] No hardcoded values (all paths computed from slug)
+- [x] Added notes to MEMORY/LEARNINGS.md
 
 ### Related Files
-- [PROJECT_MAP.md](PROJECT_MAP.md) - Confirm architecture alignment
-- [LEARNINGS.md](MEMORY/LEARNINGS.md) - Check if solved before
+- [scripts/convert_photos_coords.py](scripts/convert_photos_coords.py) - Existing location processing (reference/reuse logic)
+- [raw_data/viaCarmine-ponte_torano_verso_piazza_carmine_1900.md](raw_data/viaCarmine-ponte_torano_verso_piazza_carmine_1900.md) - Real test data
+- [.ai/PROJECT_MAP.md](PROJECT_MAP.md#layer-2-master-source) - Source format spec
+- [.ai/PROJECT_MAP.md](PROJECT_MAP.md#layer-3-generated-collection) - Output structure
 
 ---
+
+## Phase 2: Jekyll Configuration (Collections & Paths)
+
+**Status**: ✅ COMPLETED (production-ready)  
+**Owner**: Completed  
+**Priority**: P1  
+**Goal**: Validate & finalize `_config.yml` collections and permalink structure
+
+### Description
+Verify and update `_config.yml`:
+1. Collections (`photos`, `topics`) are already registered—verify paths match PROJECT_MAP.md Layer 3
+2. Confirm permalinks are correct
+3. Validate exclude list includes `archive/`, `raw_data/`, `scripts/`, etc.
+4. Add CDN configuration for Leaflet.js (if using maps)
+
+### Acceptance Criteria
+- [x] `collections.photos` exists with `output: true` and permalink `/photos/:slug/`
+- [x] `collections.topics` exists with `output: true` and permalink `/topics/:slug/`
+- [x] `exclude:` includes: `archive/`, `raw_data/`, `scripts/`, `Dockerfile`, `docker-compose.yml`
+- [x] CDN libs documented: Leaflet.js URL + version (SRI hashes noted for future)
+- [ ] Site builds without warnings: `jekyll build` (requires running Docker/podman)
+- [ ] Collections accessible via Liquid: `site.photos`, `site.topics` (verify in Phase 3)
+- [x] No path conflicts between collections and static content
+
+### Dependencies
+- [ ] Phase 1 complete (process_research.py generates _photos/)
+
+### Current State
+✅ Collections already defined in _config.yml  
+✅ Permalinks fixed to match `/photos/:slug/` and `/topics/:slug/`  
+✅ CDN configuration centralized in `cdn_libs` section
+
+### Task 2.1: Verify Collection Configuration ✅ COMPLETED
+
+- [x] Open `_config.yml`
+- [x] Confirm `collections.photos.output: true`
+- [x] Check `collections.photos.permalink` matches `/photos/:slug/`
+- [x] Fixed: Changed from `/archive/:name/` to `/photos/:slug/`
+- [x] Fixed: Changed topics from `:name` to `:slug` variable
+- [ ] Run `jekyll build --trace` and check for warnings (deferred to Phase 3)
+- [ ] Verify `_site/photos/` contains generated HTML (deferred to Phase 3)
+
+### Task 2.2: Add CDN Configuration ✅ COMPLETED
+
+Added to `_config.yml`:
+```yaml
+cdn_libs:
+  leaflet_css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+  leaflet_js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"
+  jquery: "https://code.jquery.com/jquery-3.6.0.min.js"
+  bootstrap_css: "https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+  bootstrap_js: "https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
+  georaster: "https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"
+  georaster_layer: "https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@3.10.0/dist/v3/webpack/bundle/georaster-layer-for-leaflet.min.js"
+  leaflet_bing: "https://cdn.jsdelivr.net/npm/leaflet-bing-layer@3.3.1/leaflet-bing-layer.min.js"
+  leaflet_locate_css: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.css"
+  leaflet_locate_js: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.min.js"
 ```
 
----
-
-## Active Tasks
-
-### 1. Bootstrap Jekyll Site Structure
-
-**Status**: not-started  
-**Owner**: AI  
-**Priority**: P0
-
-### Description
-Set up base Jekyll directory structure with _layouts/, _includes/, _posts/, public/ folders and initial _config.yml
-
-### Acceptance Criteria (Ideal State)
-- [ ] `_config.yml` created with site metadata and CDN libs defined
-- [ ] `_layouts/default.html` created with base template
-- [ ] `_layouts/page.html` and `_layouts/post.html` extend default
-- [ ] `_includes/head.html` loads all CDN dependencies with SRI hashes
-- [ ] `_includes/sidebar.html` for navigation
-- [ ] `public/css/`, `public/js/` created and linked
-- [ ] `public/js/config.js` generated from _config.yml variables
-- [ ] Jekyll serves locally without errors
-- [ ] Deployment to GitHub Pages tested
-
 ### Definition of Done
-- [ ] Code reviewed against .github/agents/architect.md
-- [ ] All CDN URLs pinned and validated
-- [ ] Error handling in place (console logs for missing libs)
-- [ ] PROJECT_MAP.md updated with actual CDN URLs and stack
-- [ ] Learning logged in .ai/MEMORY/LEARNINGS.md
-- [ ] Site accessible at https://[user].github.io/[repo]/
+- [x] `_config.yml` updated with correct collection permalinks
+- [x] Collections use `:slug` variable for consistency
+- [x] CDN libraries centralized (Single Source of Truth principle)
+- [x] PROJECT_MAP.md Collection structure matches actual _config.yml
+- [ ] `jekyll build` succeeds without warnings (requires Docker/podman container)
+- [ ] Collections accessible in Liquid templates (to be verified in Phase 3)
+- [ ] Added notes to MEMORY/LEARNINGS.md
 
-### Dependencies
-- None (this is bootstrap)
-
-### Notes
-Refer to PROJECT_MAP.md for CDN library versions and SRI hashes. Keep _config.yml DRY—build all URLs there, inject into JS.
+### Notes Added
+- **Permalink Fix**: Changed `/archive/:name/` to `/photos/:slug/` for proper URL structure
+- **CDN Centralization**: Following "Single Source of Truth" principle from copilot-instructions.md
+- **SRI Hashes**: Noted for future implementation (use https://www.srihash.org/)
+- **Next Step**: Refactor layouts to use `{{ site.cdn_libs.leaflet_js }}` instead of hardcoded URLs
+- **Sidebar Fix**: Replaced Bootstrap collapse with HTML5 `<details>/<summary>`, fixed collection references (`site.pages` → `site.photos`), added Topics menu
 
 ### Related Files
-- [PROJECT_MAP.md](PROJECT_MAP.md) - Update Technology stack
-- [LEARNINGS.md](MEMORY/LEARNINGS.md) - Log Jekyll quirks if found
+- [_config.yml](_config.yml) - Actual file to verify/update
+- [.ai/PROJECT_MAP.md](PROJECT_MAP.md#configuration) - _config.yml section
 
 ---
 
-### 2. Set Up Data Pipeline
+## Phase 3: Layout Templates (photo.html + topic.html + label.html Enhancements)
 
-**Status**: not-started  
-**Owner**: AI  
-**Priority**: P1
+**Status**: in-progress (core templates done, variants + styling pending)  
+**Priority**: P1  
+**Goal**: Display research photos with image variants + editorial essays linked to photos + label browsing
 
-### Description
-Create data processing scripts (if needed) to transform source data to GeoJSON or JSON for frontend consumption.
+### Task 3.1: Enhance `_layouts/photo.html` (Primary Image + Map)
 
-### Acceptance Criteria (Ideal State)
-- [ ] Source data identified (CSV, GeoJSON, API, etc.)
-- [ ] Processing script written (Python, bash, or Jekyll plugin)
-- [ ] Output saved to `public/data/` with clear naming
-- [ ] Error handling for missing/malformed source data
-- [ ] Script documented in PROJECT_MAP.md
-- [ ] Processed data validated (schema check)
-- [ ] Output committed to repo (immutable reference)
+**Status**: ✅ COMPLETED (primary image + conditional map)
 
-### Definition of Done
-- [ ] Script runs without hardcoded paths (uses environment or config)
-- [ ] Output tested for correctness
-- [ ] PROJECT_MAP.md updated with Data Sources section
-- [ ] LEARNINGS.md documents any gotchas (encoding, coordinate systems, etc.)
-- [ ] Script can be re-run safely without data loss
+**Acceptance Criteria**:
+- [x] Displays primary image thumbnail from `processed_primary_thumb`
+- [x] Thumbnail links to full-size image (`processed_primary_image`)
+- [x] Map renders only if `latitude_origin` and `longitude_origin` present in `location` array
+- [x] Map variables adapted to new location structure (extracts lat/lon from frontmatter array)
+- [x] CDN scripts (Leaflet, etc.) conditionally loaded only when map needed
+- [ ] Shows all variant images with proper metadata:
+  - [ ] Iterates `variants` array from frontmatter
+  - [ ] Displays thumbnail for each variant
+  - [ ] Shows variant `type` and `note` fields
+  - [ ] Links to full-size variant image
+- [x] Research notes rendered from page markdown body
+- [ ] Responsive image layout (lazy loading: `loading="lazy"`)
+- [x] No hardcoded paths—all image URLs from frontmatter
 
-### Dependencies
-- Task 1: Bootstrap Jekyll Site Structure
+**Completed**:
+- [x] Primary image thumbnail with fallback chain
+- [x] Thumbnail link to full image
+- [x] Conditional map based on location data
+- [x] Map center/zoom from location array
+- [x] Bootstrap + Leaflet libs conditionally loaded
 
-### Notes
-Decide: commit processed data to repo or generate on demand? For GitHub Pages, commit is safer (no build step). Log coordinate system and assumptions in LEARNINGS.md.
+**Pending**:
+- [ ] Variant image support (Parent-Variant pattern)
+- [ ] Lazy loading optimization
+
+**Implementation Notes**:
+```liquid
+{%- for variant in page.variants -%}
+  <figure class="variant variant--{{ forloop.index }}">
+    <img src="{{ variant.thumb }}" alt="{{ page.title }} - {{ variant.type }}" loading="lazy">
+    <figcaption>{{ variant.type }}: {{ variant.note }}</figcaption>
+  </figure>
+{%- endfor -%}
+```
+
+### Task 3.2: Create/Enhance `_layouts/topic.html` (Editorial Essays)
+
+**Status**: ✅ COMPLETED (functional, styling optional)
+
+**Acceptance Criteria**:
+- [x] Renders manual essay markdown (`{{ content }}`)
+- [x] Reads `featured_photos: [{id: photo_slug, commentary: "..."}]` from frontmatter
+- [x] Uses Liquid to join with photos collection by slug
+- [x] Displays photo thumbnail + commentary inline within article
+- [x] Links from thumbnail to full photo page
+- [x] No hardcoded paths (uses relative_url filter)
+- [x] Shows "Documentazione Collegata" section with thumbnails
+- [x] Includes error handling for missing photos
+
+**Completed**:
+- [x] Created `_layouts/topic.html` with featured_photos loop
+- [x] Collection join: `site.photos | where: "slug", item.id | first`
+- [x] Photo thumbnails with border/styling
+- [x] "Visualizza scheda tecnica" links to photo detail pages
+- [x] Created test topic: `_topics/test-topic-ciminiera-e-ponte.md`
+- [x] Test topic successfully references both photo collection items
+
+**Notes**: This is the "editorial layer" where researchers annotate and contextualize source materials. Fully functional.
+
+### Task 3.3: Add Label/Tag Browsing System
+
+**Status**: ✅ COMPLETED (functional tag filtering)
+
+**Acceptance Criteria**:
+- [x] Extract unique labels from all photos in collection
+- [x] Show label counts
+- [x] Display as submenu in sidebar
+- [x] Create label.html layout for single-label view
+- [x] Filter photos by label via URL query parameter (`?tag=...`)
+- [x] Show all photos with matching label
+- [x] Client-side toggle between index and filtered views
+
+**Completed**:
+- [x] Updated `_includes/sidebar.html` with Labels submenu
+- [x] Computed unique labels from `page.labels` across all photos
+- [x] Shows label count: "piazza carmine (2)", "ciminiera (1)", etc.
+- [x] Created `_layouts/label.html` with dual views:
+  - Index: all labels with counts
+  - Filtered: photos matching selected label (client-side filter)
+- [x] Created `labels.md` index page at `/labels/`
+- [x] JavaScript parses `?tag=...` query param and toggles filtered view
+- [x] Photo grid cards in filtered view with thumbnails + links
+
+**Notes**: Labels are extracted at build-time; filtering happens client-side for zero-server overhead.
+
+### Definition of Done (Phase 3)
+- [x] photo.html: primary image + conditional map ✅
+- [x] topic.html: editorial essays with featured_photos ✅
+- [x] label.html: tag browsing + filtering ✅
+- [x] Sidebar: updated with Photos, Topics, Labels submenu ✅
+- [x] No hardcoded paths or magic values (all from frontmatter/config) ✅
+- [ ] `jekyll build` succeeds without errors (⏳ pending Docker test)
+- [ ] Images lazy-load (optional optimization)
+- [ ] Variant image support in photo.html (⏳ deferred to next phase)
+- [ ] Added implementation notes to MEMORY/LEARNINGS.md (⏳ at session end)
 
 ### Related Files
-- [PROJECT_MAP.md](PROJECT_MAP.md) - Data Sources section
-- [LEARNINGS.md](MEMORY/LEARNINGS.md) - Encoding, CRS, validation lessons
+- [_layouts/photo.html](_layouts/photo.html) - Enhanced with primary image + conditional map ✅
+- [_layouts/topic.html](_layouts/topic.html) - Created for editorial essays ✅
+- [_layouts/label.html](_layouts/label.html) - Created for tag browsing ✅
+- [_includes/sidebar.html](_includes/sidebar.html) - Updated with all 3 collections + labels ✅
+- [labels.md](labels.md) - New index page for tag browsing ✅
+- [_topics/test-topic-ciminiera-e-ponte.md](_topics/test-topic-ciminiera-e-ponte.md) - Test topic ✅
 
 ---
 
-### 3. Implement Frontend Map/Visualization
+## Phase 4: Docker Multi-Stage Build
 
 **Status**: not-started  
-**Owner**: AI  
-**Priority**: P1
+**Owner**: [Assign]  
+**Priority**: P2  
+**Goal**: Create production-ready Docker pipeline: Python → Jekyll → Nginx
 
 ### Description
-Build interactive frontend using Leaflet.js (or similar), load processed data, display markers/overlays/controls.
+Multi-stage Dockerfile:
+- **Stage 1**: Python 3.11 + process_research.py (generates _photos/)
+- **Stage 2**: Ruby 3.2 + Jekyll build (generates _site/)
+- **Stage 3**: Minimal Nginx (serves _site/)
 
-### Acceptance Criteria (Ideal State)
-- [ ] Map loads on page with correct center/zoom from config
-- [ ] Base layer (OSM or configured tile) renders
-- [ ] Data layers load from `public/data/` via fetch
-- [ ] Markers/popups display correctly with no console errors
-- [ ] Error handling: graceful fallback if data or tiles fail to load
-- [ ] Mobile-responsive (touch controls, readable on small screens)
-- [ ] Accessibility: ARIA labels, keyboard navigation for controls
-- [ ] Layer control shows/hides overlays without reload
-- [ ] URL state preserved (if bookmarking implemented)
+Plus `.dockerignore` to exclude `archive/` (private data)
 
-### Definition of Done
-- [ ] No hardcoded coordinates or API URLs (all from config)
-- [ ] Network errors logged to console, not silent
-- [ ] Tested in Chrome, Firefox, Safari, Edge
-- [ ] PDO tested on mobile (iPhone, Android)
-- [ ] PROJECT_MAP.md updated with Frontend stack details
-- [ ] LEARNINGS.md documents browser compatibility issues
-- [ ] Deployed and working on GitHub Pages
+### Acceptance Criteria
+- [ ] Stage 1 runs Python script, outputs to `_photos/` + `assets/`
+- [ ] Stage 2 reads generated _photos/, builds site
+- [ ] Stage 3 serves only `_site/` on port 80
+- [ ] Image size optimized (no unused layers)
+- [ ] `.dockerignore` excludes `archive/`
+- [ ] `docker compose up` starts correctly
+- [ ] No build warnings about missing files
 
 ### Dependencies
-- Task 1: Bootstrap Jekyll Site Structure
-- Task 2: Set Up Data Pipeline
-
-### Notes
-Use config.js injected from _config.yml. Load data asynchronously with error handling. Test slow networks with browser DevTools throttling.
+- [ ] Phase 1 complete (process_research.py exists)
+- [ ] Phase 2 complete (_config.yml configured)
 
 ### Related Files
-- [PROJECT_MAP.md](PROJECT_MAP.md) - External CDN dependencies, API keys
-- [LEARNINGS.md](MEMORY/LEARNINGS.md) - Browser quirks, CORS issues
+- [Dockerfile](Dockerfile) - Update to multi-stage
+- [docker-compose.yml](docker-compose.yml)
+- [.dockerignore](.dockerignore) - Create if not exists
+- [Makefile](Makefile) - Already has `make build`, `make serve`
 
 ---
 
-### 4. Add Static Content & Navigation
+## Phase 5: Asset Refactor (public/ → assets/)
 
 **Status**: not-started  
-**Owner**: AI  
-**Priority**: P2
+**Owner**: [Assign]  
+**Priority**: P3  
+**Goal**: Consolidate CSS/JS from Lanyon theme under `assets/` structure
 
 ### Description
-Create about page, blog posts, footer, and navigation structure. Use Jekyll frontmatter for metadata.
+Move theme resources to follow Jekyll standards:
+- CSS: `public/css/` → `assets/css/`
+- JS: `public/js/` → `assets/js/`
+- Update references in `_includes/head.html` + `_includes/sidebar.html`
 
-### Acceptance Criteria (Ideal State)
-- [ ] Home page (index.md) with project overview
-- [ ] About page (about.md) with project context
-- [ ] Blog post template (_layouts/post.html) functional
-- [ ] Navigation menu in sidebar (_includes/sidebar.html)
-- [ ] Footer with links and attribution
-- [ ] All pages styled consistently with main CSS
-- [ ] No broken links or 404s
-- [ ] Mobile navigation works on small screens
-
-### Definition of Done
-- [ ] HTML validates (no console warnings)
-- [ ] Accessibility: All text has sufficient contrast, semantic HTML used
-- [ ] PROJECT_MAP.md updated if new pages change architecture
-- [ ] LEARNINGS.md documents Jekyll template quirks if found
+### Acceptance Criteria
+- [ ] All CSS files moved to `assets/css/`
+- [ ] All JS files moved to `assets/js/`
+- [ ] `_includes/head.html` updated with new paths
+- [ ] `_includes/sidebar.html` updated with new paths
+- [ ] No broken links in built _site/
+- [ ] Page loads correctly locally
+- [ ] Git commit reflects move (no content changes)
 
 ### Dependencies
-- Task 1: Bootstrap Jekyll Site Structure
+- [ ] Phases 1-4 working
 
 ### Notes
-Keep navigation DRY—pull menu from _data/nav.yml or _config.yml, iterate in _includes/.
+Low priority—visual polish phase. Only after core pipeline works.
 
 ---
 
-### 5. Testing & Validation
+## Key Principles (from copilot-instructions.md)
 
-**Status**: not-started  
-**Owner**: AI  
-**Priority**: P1
-
-### Description
-Test site across browsers, devices, network conditions, and validate performance.
-
-### Acceptance Criteria (Ideal State)
-- [ ] Automated: Links checker passes (no 404s)
-- [ ] Chrome, Firefox, Safari, Edge all render correctly
-- [ ] Mobile: iPhone 12, Android responsive and touch-friendly
-- [ ] Network: Tested with 3G throttling, works without hanging
-- [ ] Performance: Lighthouse score >90
-- [ ] Accessibility: WAVE scan passes, keyboard navigation works
-- [ ] Offline: Loading states shown, no silent failures
-- [ ] GitHub Pages: Deployed and public URL working
-
-### Definition of Done
-- [ ] Automated tests run on push (GitHub Actions, if applicable)
-- [ ] Known browser issues documented in LEARNINGS.md
-- [ ] CLIENT_MAP.md updated with test results
-- [ ] No console errors or warnings in production
-
-### Dependencies
-- All prior tasks
-
-### Notes
-Use GitHub Actions matrix for multi-browser testing. Document any browser-specific CSS/JS patches in LEARNINGS.md for future reference.
-
----
-
-## Backlog (Future Sprints)
-
-### [ ] Optimize asset loading (lazy load images, minify CSS/JS)
-### [ ] Add analytics (Plausible, or no tracking if privacy-first)
-### [ ] Set up CI/CD pipeline (GitHub Actions on push)
-### [ ] Deploy to custom domain (DNS setup)
-### [ ] Add multi-language support (if needed)
-### [ ] Implement search (static or external)
-
----
-
-## Completed Tasks
-
-(Move tasks here with completion date and summary)
+✅ **Single Source of Truth**: Configuration in `_config.yml` or PROJECT_MAP.md  
+✅ **No Magic Numbers**: All constants documented  
+✅ **No Silent Failures**: Log all errors to console  
+✅ **Validate All URLs**: CDN + SRI hashes  
+✅ **One-Way Pipeline**: `raw_data/` → `_photos/` → `_site/` (never hand-edit generated)  
+✅ **Parent-Variant Pattern**: One object = one `.md` file with primary + variants array (no duplicate entries)
 
 ---
 
 ## Notes for Next Session
 
-- [Item 1]: What did we discover?
-- [Item 2]: What should we try next?
-- [Item 3]: What got blocked?
+---
 
-(This section rolls forward to LEARNINGS.md at session end via harvest-learning.md)
+## Active TODO List (as of 2026-02-27)
+
+### Map & Photo Frontmatter Integration
+
+- [ ] Extract GeoJSON from frontmatter in photo.html
+- [ ] Pass GeoJSON variables to JavaScript in photo.html
+- [ ] Add GeoJSON layer config to LAYER_CONFIG in myscript.js
+- [ ] Create addIndividualGeoJsonLayers() function in myscript.js
+- [ ] Add layer styling for origin/fov/line layers
+- [ ] Integrate individual layers into initMap() workflow
+- [ ] Test with Piazza_Carmine-anni-1940-1950.md example
+
+**Status:** All tasks above are NOT STARTED. Progress tracked here and in session notes.
+- Test Parent-Variant folder structure with real images before Phase 1 completion

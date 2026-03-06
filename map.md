@@ -4,6 +4,7 @@ title: General Map
 center_lat: 41.355946
 center_lng: 14.370868
 zoom: 18
+activelayers: ["esri","1884"]
 locate_control: true
 ---
 

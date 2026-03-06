@@ -1,0 +1,17 @@
+services:
+  jekyll:
+    image: jekyll-lanyon:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/usr/src/app
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "4000:4000"
+      - "35729:35729"  # LiveReload port
+    environment:
+      - JEKYLL_ENV=development
+
+volumes:
+  bundle_cache:

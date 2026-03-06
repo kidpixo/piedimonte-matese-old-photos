@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "photos_fov",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "title": "Piazza Carmine, 1940-1950", "date": "1945-01-01" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 14.37222674, 41.35539924 ], [ 14.37226942, 41.35535474 ], [ 14.37213319, 41.35525257 ], [ 14.37222674, 41.35539924 ] ] ] } },
+{ "type": "Feature", "properties": { "title": "Via Carmine ponte torano verso piazza Carmine circa 1900", "date": "1900-01-01" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 14.37159419, 41.35528481 ], [ 14.37221629, 41.35534475 ], [ 14.37199924, 41.35519581 ], [ 14.37159419, 41.35528481 ] ] ] } }
+]
+}

@@ -1,8 +1,28 @@
-.PHONY: help serve
+.PHONY: help serve serve_old build up down logs clean
 .DEFAULT_GOAL := help
 
-serve: ## Serve the Jekyll site locally using a podman container
+serve_old: ## Serve the Jekyll site locally using a podman container
 	podman run --rm -p 4000:4000 --name jekyll-lanyon -v "$$(pwd):/srv/jekyll" -it -w /srv/jekyll localhost/gh-pages:alpine jekyll serve --unpublished --future --host 0.0.0.0 --force_polling
+
+build: ## Build the Docker image
+	podman-compose build
+
+up: ## Start Jekyll server in Docker (detached)
+	podman-compose up
+
+serve: up ## Alias for 'up' - Start Jekyll server in Docker
+
+down: ## Stop and remove Docker containers
+	podman-compose down
+
+logs: ## View Docker container logs (follow mode)
+	podman-compose logs -f jekyll
+
+clean: ## Stop containers and remove volumes
+	podman-compose down -v
+
+rebuild: ## Rebuild Docker image from scratch
+	podman-compose build --no-cache
 
 #################################################################################
 # Self Documenting Commands                                                     #

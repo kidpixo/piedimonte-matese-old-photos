@@ -1,0 +1,130 @@
+- filename: OrologiaioCarnevale_PiazzaCarmine_fianco-BarCarletto-1900.jpg
+  width: 1403.0
+  height: 2048.0
+  latitude_origin: 41.35528435
+  longitude_origin: 14.37209687
+  latitude_vertex_left: 41.35528163
+  longitude_vertex_left: 14.3715347
+  latitude_vertex_right: 41.3553116
+  longitude_vertex_right: 14.37200968
+  text: Piazza Carmine,Orologiaio Carnevale,circa 1900
+  time: '1900-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37209687 41.35528435)
+  line_of_sight_wkt: LINESTRING (14.37209687 41.35528435, 14.37177219 41.355296615)
+  fov_wkt: POLYGON ((14.37209687 41.35528435, 14.3715347 41.35528163, 14.37200968 41.3553116, 14.37209687 41.35528435))
+- filename: PiazzaCarmine_PanetteriaLeonetti-1956_alluvione.jpg
+  width: 1578.0
+  height: 1196.0
+  latitude_origin: 41.35514858
+  longitude_origin: 14.37261771
+  latitude_vertex_left: 41.35542921
+  longitude_vertex_left: 14.3722063
+  latitude_vertex_right: 41.3552067
+  longitude_vertex_right: 14.37265949
+  text: Piazza Carmine,alluvione,1956
+  time: '1956-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37261771 41.35514858)
+  line_of_sight_wkt: LINESTRING (14.37261771 41.35514858, 14.372432895 41.355317955)
+  fov_wkt: POLYGON ((14.37261771 41.35514858, 14.3722063 41.35542921, 14.37265949 41.3552067, 14.37261771 41.35514858))
+- filename: Piazza_Carmine-anni-1940-1950.jpg
+  width: 1414.0
+  height: 962.0
+  latitude_origin: 41.35539924
+  longitude_origin: 14.37222674
+  latitude_vertex_left: 41.35535474
+  longitude_vertex_left: 14.37226942
+  latitude_vertex_right: 41.35525257
+  longitude_vertex_right: 14.37213319
+  text: Piazza Carmine,anni 1940-1950
+  time: '1945-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37222674 41.35539924)
+  line_of_sight_wkt: LINESTRING (14.37222674 41.35539924, 14.372201305 41.355303655)
+  fov_wkt: POLYGON ((14.37222674 41.35539924, 14.37226942 41.35535474, 14.37213319 41.35525257, 14.37222674 41.35539924))
+- filename: ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
+  width: 843.0
+  height: 1344.0
+  latitude_origin: 41.35528481
+  longitude_origin: 14.37159419
+  latitude_boresight: 41.3552511
+  longitude_boresight: 14.3718034
+  latitude_vertex_left: 41.35534475
+  longitude_vertex_left: 14.37221629
+  latitude_vertex_right: 41.35519581
+  longitude_vertex_right: 14.37199924
+  text: Via Carmine,ponte sul Torano
+  time: '1900-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37159419 41.35528481)
+  line_of_sight_wkt: LINESTRING (14.37159419 41.35528481, 14.3718034 41.3552511)
+  fov_wkt: POLYGON ((14.37159419 41.35528481, 14.37221629 41.35534475, 14.37199924 41.35519581, 14.37159419 41.35528481))
+- filename: abatttimento_ciminera_1972.jpg
+  width: 1186.0
+  height: 800.0
+  latitude_origin: 41.35467633
+  longitude_origin: 14.37197472
+  latitude_vertex_left: 41.3541373
+  longitude_vertex_left: 14.3722031
+  latitude_vertex_right: 41.3543017
+  longitude_vertex_right: 14.37165822
+  text: Abbattimento ciminiera cotonificio,1972
+  time: '1972-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37197472 41.35467633)
+  line_of_sight_wkt: LINESTRING (14.37197472 41.35467633, 14.37193066 41.3542195)
+  fov_wkt: POLYGON ((14.37197472 41.35467633, 14.3722031 41.3541373, 14.37165822 41.3543017, 14.37197472 41.35467633))
+- filename: piazzacarmine_26-ottobre-1966.jpg
+  width: 800.0
+  height: 513.0
+  latitude_origin: 41.35455236
+  longitude_origin: 14.37280979
+  latitude_vertex_left: 41.35536246
+  longitude_vertex_left: 14.37210595
+  latitude_vertex_right: 41.35474126
+  longitude_vertex_right: 14.37291332
+  text: Piazza Carmine,26 ottobre 1966
+  time: '1900-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37280979 41.35455236)
+  line_of_sight_wkt: LINESTRING (14.37280979 41.35455236, 14.372509635 41.35505186)
+  fov_wkt: POLYGON ((14.37280979 41.35455236, 14.37210595 41.35536246, 14.37291332 41.35474126, 14.37280979 41.35455236))
+- filename: ponte_torano_verso_piazza_carmine_anni70.jpg
+  width: 800.0
+  height: 515.0
+  latitude_origin: 41.35524212
+  longitude_origin: 14.37180035
+  latitude_boresight: 41.35526264
+  longitude_boresight: 14.37239237
+  latitude_vertex_left: 41.3553838
+  longitude_vertex_left: 14.37234753
+  latitude_vertex_right: 41.3548071
+  longitude_vertex_right: 14.37285429
+  text: Ponte sul Torano,anni 1970
+  time: '1972-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37180035 41.35524212)
+  line_of_sight_wkt: LINESTRING (14.37180035 41.35524212, 14.37239237 41.35526264)
+  fov_wkt: POLYGON ((14.37180035 41.35524212, 14.37234753 41.3553838, 14.37285429 41.3548071, 14.37180035 41.35524212))
+- filename: ruderi_convento_carmine.jpg
+  width: 960.0
+  height: 720.0
+  latitude_origin: 41.3548701
+  longitude_origin: 14.3728472
+  latitude_vertex_left: 41.3549588
+  longitude_vertex_left: 14.3717214
+  latitude_vertex_right: 41.3553662
+  longitude_vertex_right: 14.3721102
+  text: Ruderi convento del Carmine,anni 1960?
+  time: '1960-00-00 00:00:00+00'
+  origin_wkt: POINT (14.3728472 41.3548701)
+  line_of_sight_wkt: LINESTRING (14.3728472 41.3548701, 14.3719158 41.3551625)
+  fov_wkt: POLYGON ((14.3728472 41.3548701, 14.3717214 41.3549588, 14.3721102 41.3553662, 14.3728472 41.3548701))
+- filename: video_cotonificio-anni_1920-1930-CLIP.webm
+  width: 1920.0
+  height: 1080.0
+  latitude_origin: 41.35479666
+  longitude_origin: 14.37255641
+  latitude_vertex_left: 41.35452693
+  longitude_vertex_left: 14.37244107
+  latitude_vertex_right: 41.35436164
+  longitude_vertex_right: 14.37196609
+  text: Video cotonificio Istituto Luce,anni 1920-1930
+  time: '1925-00-00 00:00:00+00'
+  origin_wkt: POINT (14.37255641 41.35479666)
+  line_of_sight_wkt: LINESTRING (14.37255641 41.35479666, 14.37220358 41.354444285)
+  fov_wkt: POLYGON ((14.37255641 41.35479666, 14.37244107 41.35452693, 14.37196609 41.35436164, 14.37255641 41.35479666))

@@ -1,0 +1,54 @@
+---
+layout: default
+---
+<article class="topic-container">
+  <header class="topic-header">
+    <h1 class="page-title">{{ page.title }}</h1>
+    <p class="message">Narrativa di ricerca</p>
+  </header>
+
+  <div class="topic-content">
+    {{ content }}
+  </div>
+
+  <hr>
+
+  <section class="topic-gallery">
+    <h3>Documentazione Collegata</h3>
+
+    {% for item in page.featured_photos %}
+      {% comment %}
+        Join the photo data by searching the collection for a slug
+        that matches the ID provided in the topic frontmatter.
+      {% endcomment %}
+      {% assign photo_data = site.photos | where: "slug", item.id | first %}
+
+      {% if photo_data %}
+        {% assign all_images = photo_data.processed_images | default: photo_data.images %}
+        {% assign primary_obj = nil %}
+        {% if all_images and all_images.size > 0 %}
+          {% assign primary_obj = all_images | where: "is_primary", true | first %}
+          {% if primary_obj == nil %}
+            {% assign primary_obj = all_images | first %}
+          {% endif %}
+        {% endif %}
+        {% assign photo_thumb = primary_obj.thumb | default: photo_data.processed_primary_thumb | default: photo_data.processed_primary_image | default: photo_data.primary_image %}
+        <div class="topic-photo-entry" style="margin-bottom: 2rem; border-left: 4px solid #eee; padding-left: 1rem;">
+          <a href="{{ photo_data.url | relative_url }}">
+            {% if photo_thumb %}
+              <img src="{{ photo_thumb | relative_url }}" alt="{{ photo_data.title }}" style="max-width: 200px;">
+            {% endif %}
+          </a>
+
+          <div class="photo-commentary">
+            <strong>Analisi contestuale:</strong>
+            <p>{{ item.commentary }}</p>
+            <p><a href="{{ photo_data.url | relative_url }}">Visualizza scheda tecnica e ricerca completa &rarr;</a></p>
+          </div>
+        </div>
+      {% else %}
+        <p style="color: red;">[Errore: Foto con ID "{{ item.id }}" non trovata nel dataset.]</p>
+      {% endif %}
+    {% endfor %}
+  </section>
+</article>

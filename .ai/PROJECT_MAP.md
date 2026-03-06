@@ -1,17 +1,133 @@
 # Project Architecture Map
 
-**Last Updated**: [Date]  
-**Primary Context Source**: This file  
-**Update Frequency**: After major architectural decisions
+**Project**: Lanyon Research Database  
+**Purpose**: Refactor scattered research documentation into a high-integrity Jekyll site with Python-driven data pipeline  
+**Stack**: Python (data pipeline) + Jekyll (site gen) + Docker (deployment)  
+**Hosting**: VPS (Docker) + GitHub Pages option
 
 ---
 
-## Project Summary
+## Project Goal
 
-**Name**: [Project Name]  
-**Type**: Jekyll Static Site (GitHub Pages)  
-**Purpose**: [One-line project mission]  
-**Hosting**: GitHub Pages (CDN-only, no backend)
+Migrate from manual file management to an automated research database with:
+- Structured data storage (YAML frontmatter + images)
+- Image optimization (web + thumbnails)
+- Geospatial indexing (GeoJSON)
+- Editorial essays linked to source materials
+
+---
+
+## Data Architecture (Data Retrieval Structure)
+
+### Layer 1: Archive (Private)
+- **Location**: `archive/`
+- **Content**: Raw scans, original notes (NOT deployed)
+- **Purpose**: Permanent backup, source truth
+
+### Layer 2: Master Source
+- **Location**: `raw_data/`
+- **Format**: `[slug].md` (YAML frontmatter + research notes) + images
+- **Parent-Variant Structure** (Historical Object Pattern):
+  - Each `.md` file represents ONE research object/event
+  - Stores ONE primary image + optional array of variant images
+  - Variants capture different views/states of the same object
+
+**Example: `raw_data/monastery-facade.md`**
+```yaml
+---
+title: "Main Facade - San Pasquale Monastery"
+date: 2024-01-15
+labels: [architecture, restoration, monastery]
+location:
+  lat: 41.376
+  lng: 14.372
+primary_image: "monastery-facade-original.jpg"
+variants:
+  - file: "monastery-facade-restored-2024.jpg"
+    type: "Digital Restoration"
+    note: "Color corrected and noise reduced by MDA."
+  - file: "monastery-facade-crop-detail.jpg"
+    type: "Detail Crop"
+    note: "Focus on the stone carving above the main portal."
+---
+This monastery facade was... (Research text here)
+```
+
+- **Required Fields**: `title`, `labels`
+- **Optional Fields**: `date`, `location: {lat, lng}`, `variants` array with `{file, type, note}`
+- **Owner**: Human (manual curation)
+
+### Layer 3: Generated Collection
+- **Location**: `_photos/` (Jekyll collection, auto-generated)
+- **Source**: Python script processes `raw_data/` files with Parent-Variant pattern
+- **Output Format**: `.md` files with frontmatter + body text
+- **Frontmatter Structure**:
+  ```yaml
+  title: "..."
+  date: "..."
+  location: {lat: X, lng: Y}
+  labels: [...]
+  primary_image: "assets/images/[slug]-main.jpg"
+  primary_thumb: "assets/thumbs/[slug].jpg"
+  variants:
+    - file: "assets/images/variants/[slug]/monastery-facade-restored-2024.jpg"
+      thumb: "assets/thumbs/variants/[slug]/monastery-facade-restored-2024.jpg"
+      type: "Digital Restoration"
+      note: "Color corrected and noise reduced by MDA."
+    - file: "assets/images/variants/[slug]/monastery-facade-crop-detail.jpg"
+      thumb: "assets/thumbs/variants/[slug]/monastery-facade-crop-detail.jpg"
+      type: "Detail Crop"
+      note: "Focus on the stone carving above the main portal."
+  ```
+- **Auto-Generated Assets**:
+  - Primary image → `assets/images/[slug]-main.jpg`
+  - Primary thumbnail (150×150) → `assets/thumbs/[slug].jpg`
+  - Variant images → `assets/images/variants/[slug]/[variant-filename].jpg`
+  - Variant thumbnails → `assets/thumbs/variants/[slug]/[variant-filename].jpg`
+  - GeoJSON index → `assets/data/geojson.geojson`
+
+### Layer 4: Editorial Essays
+- **Location**: `_topics/` (Jekyll collection, manual)
+- **Format**: Markdown with `featured_photos` frontmatter array
+- **Each entry**: `{id: photo_slug, commentary: "..."}`
+- **Rendering**: Liquid joins photos collection to display inline
+
+### Output Layer
+- **Location**: `_site/` (Jekyll build output)
+- **Served by**: Docker + Nginx or GitHub Pages
+
+---
+
+## Processing Pipeline
+
+### Stage 1: Python Data Processing (`scripts/process_research.py`)
+
+**Input**: `raw_data/*.md` + images  
+**Output**: `_photos/`, `assets/`, `assets/data/geojson.geojson`
+
+**Tasks**:
+1. Scan all `raw_data/*.md` files
+2. Validate YAML frontmatter (required fields + variants array if present)
+3. Process primary image:
+   - Optimize and save to `assets/images/[slug]-main.jpg`
+   - Create 150×150 thumbnail → `assets/thumbs/[slug].jpg`
+4. Process variant images (if `variants` array exists):
+   - Loop through each variant in the array
+   - Optimize each and save to `assets/images/variants/[slug]/[variant-filename].jpg`
+   - Create 150×150 thumbnail → `assets/thumbs/variants/[slug]/[variant-filename].jpg`
+   - Preserve metadata: `type`, `note` fields
+5. Generate GeoJSON → `assets/data/geojson.geojson`
+6. Create `.md` file in `_photos/[slug].md` for each entry:
+   - Copy body text from raw_data
+   - Add frontmatter with links to all processed images (primary + variants)
+
+### Stage 2: Jekyll Build
+- Reads `_photos/` + `_topics/` collections
+- Uses `_layouts/photo.html` and `_layouts/topic.html`
+- Outputs static HTML → `_site/`
+
+### Stage 3: Nginx Serve
+- Hosts `_site/` on VPS (production)
 
 ---
 
@@ -19,136 +135,97 @@
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| Site Gen | Jekyll (Ruby) | No build pipeline, direct HTML output |
-| Frontend | HTML/CSS/JavaScript | No frameworks, CDN libs only |
-| Styling | [CSS/SASS] | [location] |
-| Maps/GIS | [e.g., Leaflet.js] | [CDN URL + version] |
-| Data Format | [GeoJSON/CSV/JSON] | [sourcing] |
-| Deployment | GitHub Pages | Static only, no functions |
+| Data Processing | Python 3.11+ | Pillow (images), python-frontmatter (YAML) |
+| Site Generator | Jekyll 4.x | Ruby 3.2 (github-pages compatible) |
+| Frontend | HTML/CSS/JavaScript | Leaflet.js (CDN) for maps |
+| Styling | CSS (Lanyon theme) | Moving from `public/` to `assets/` |
+| Container | Docker multi-stage | Python → Jekyll → Nginx |
+| Deployment | VPS + optional GH Pages | Docker Compose on VPS |
 
 ---
 
-## Architecture Layers
+## Configuration
 
-### Layer 1: Static Content
-- **Files**: `_layouts/`, `_posts/`, `_includes/`
-- **Config**: `_config.yml`
-- **Output**: HTML served as-is
-
-### Layer 2: Frontend Logic
-- **Files**: `public/js/`
-- **CDN Dependencies**: [List with pinned URLs]
-- **Constraints**: No npm, no build step
-
-### Layer 3: Data Pipeline
-- **Source**: [CSV/GeoJSON files location]
-- **Processing**: [Python/bash scripts, if any]
-- **Output**: [Format and location]
-
-### Layer 4: External APIs
-- **Services Used**: [OSM, Bing, etc.]
-- **API Keys**: [Environment variables, never hardcoded]
-- **Fallbacks**: [Graceful degradation plan]
-
----
-
-## Configuration Single Source of Truth
-
-### Key Settings (Central in `_config.yml`)
+### `_config.yml` Collections
 
 ```yaml
-site_name: [Project Name]
-base_url: https://[username].github.io/[repo]/
-cdn_libs:
-  leaflet: https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js
-  leaflet_css: https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css
-api_keys:
-  bing: <%= ENV['BING_API_KEY'] || '' %>
-  stadia: <%= ENV['STADIA_KEY'] || '' %>
-```
+collections:
+  photos:
+    output: true
+    permalink: /photos/:slug/
+  topics:
+    output: true
+    permalink: /topics/:slug/
 
-### Shared Constants
-
-**Document all magic numbers and constants in one place:**
-
-```javascript
-// public/js/config.js - Generated from _config.yml at build time
-const APP_CONFIG = {
-  siteUrl: "{{ site.base_url }}",
-  version: "{{ site.version }}",
-  defaultZoom: 18,
-  centerLat: 41.355946,
-  centerLng: 14.370868,
-  apiKeys: {
-    bing: "{{ site.api_keys.bing }}"
-  }
-};
+exclude:
+  - archive/
+  - raw_data/
+  - scripts/
+  - Dockerfile
+  - docker-compose.yml
 ```
 
 ---
 
-## Data Sources
+## File Manifest
 
-| Data | Source | Format | Location | Ownership |
-|------|--------|--------|----------|-----------|
-| [e.g., Photos] | [CSV] | GeoJSON | `public/data/` | [Internal/External] |
-| [e.g., Base Map] | [Tile Server] | Tiles | CDN | [Attribution] |
-
----
-
-## External Dependencies (CDN-Only)
-
-| Library | URL | Version | SRI Hash | Usage |
-|---------|-----|---------|----------|-------|
-| Leaflet.js | `https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js` | 1.9.4 | [Hash] | Maps |
-| [Add more] | | | | |
-
-**Rule**: Every external URL must have a pinned version and SRI hash.
+| Path | Type | Purpose |
+|------|------|---------|
+| `archive/` | Folder | Private backups (excluded from build) |
+| `raw_data/` | Folder | Master YAML + images (source of truth) |
+| `_photos/` | Jekyll Collection | Auto-generated from raw_data |
+| `_topics/` | Jekyll Collection | Manual editorial essays |
+| `assets/images/` | Folder | Optimized photos |
+| `assets/thumbs/` | Folder | 150×150 thumbnails |
+| `assets/data/` | Folder | GeoJSON and metadata |
+| `_site/` | Output | Final HTML (deployment target) |
+| `scripts/process_research.py` | Script | Python ETL pipeline |
 
 ---
 
-## Key Decision Log
+## Constraints & Decisions
 
-### Decision 1: CDN-Only Approach
-**When**: [Date]  
-**Why**: GitHub Pages cannot run npm or build pipelines  
-**Impact**: All external libs pinned via CDN URLs with SRI hashes  
-**Revisit**: [Date or condition]
+### Parent-Variant Pattern (Historical Object)
+- **Why**: One research object (e.g., facade) may have multiple visual representations (original, restored, detail crop)
+- **Design**: Each `raw_data/*.md` file is ONE object with a primary image + optional variants array
+- **Benefit**: Single source of truth—update object metadata once, all variants inherit location/date/labels
+- **Implementation**: Python script respects this structure; generates folder hierarchy `assets/images/variants/[slug]/`
+- **Anti-pattern**: Don't create separate entries for each variant (causes data drift)
 
-### Decision 2: [Title]
-**When**: [Date]  
-**Why**: [Rationale]  
-**Impact**: [Side effects]  
-**Revisit**: [Date or condition]
+### No site_source/ folder
+- **Why**: Jekyll's default workflow is `root → _site/`
+- **You currently**: Source files in `root/`, output to `_site/`
+- **No change needed**: Keep this structure
 
----
-
-## Known Limitations & Tech Debt
-
-| Issue | Severity | Notes | Workaround |
-|-------|----------|-------|-----------|
-| [e.g., No backend] | High | Cannot serve dynamic content | Use GitHub API or static JSON |
-| [e.g., CORS for tiles] | Medium | Cross-origin requests limited | CORS-friendly tile servers only |
-| [e.g., File size] | Low | Large GeoJSON can slow load | Consider tiling or pagination |
+### One-way pipeline
+- Human edits `raw_data/` → Python runs → `_photos/` generated → Jekyll builds → `_site/`
+- Never hand-edit `_photos/` (regenerated each build)
 
 ---
 
-## Deployment Checklist
+## Known Issues & Tech Debt
 
-- [ ] All CDN URLs tested and responding
-- [ ] SRI hashes validated
-- [ ] Environment variables set in GitHub Secrets (if used)
-- [ ] CORS headers verified for external requests
-- [ ] Error logging enabled in console
-- [ ] Loading states shown to user
-- [ ] Fallbacks tested (offline, slow network)
+| Issue | Status | Notes |
+|-------|--------|-------|
+| Ruby 3.3 incompatible | ✅ Fixed | Downgraded to 3.2 for jekyll compatibility |
+| Multi-stage Docker | Planned | Need Stage 1: Python, Stage 2: Jekyll, Stage 3: Nginx |
+| Asset migration | Pending | Move `public/` CSS/JS to `assets/` |
 
 ---
 
-## Related Files to Update After Changes
+## Next Steps (From README.md Tasks)
 
-- `.ai/IMPLEMENTATION_STEPS.md` - If tasks change
-- `.ai/MEMORY/LEARNINGS.md` - If lessons learned
-- `_config.yml` - If settings change
-- `public/js/config.js` - If constants change
-- `.github/copilot-instructions.md` - If global rules change
+- [ ] **Phase 1**: Create `scripts/process_research.py` (data pipeline)
+- [ ] **Phase 2**: Update `_config.yml` (Jekyll collections)
+- [ ] **Phase 3**: Create `_layouts/photo.html` and `_layouts/topic.html`
+- [ ] **Phase 4**: Update Docker (multi-stage build)
+- [ ] **Phase 5**: Asset refactor (public/ → assets/)
+
+---
+
+## Related Files
+
+- `.ai/IMPLEMENTATION_STEPS.md` - Task tracking
+- `.ai/MEMORY/LEARNINGS.md` - Session notes
+- `_config.yml` - Jekyll configuration
+- `README.md` - Project overview
