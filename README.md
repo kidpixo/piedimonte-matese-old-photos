@@ -103,7 +103,7 @@ See [LICENSE.md](LICENSE.md) for details.
 ## Author
 
 **Mario D'Amore**  
-Email: maariodamore77@gmail.com
+Email: kidpixo@gmail.com
 
 ---
 
