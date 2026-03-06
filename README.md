@@ -1,79 +1,110 @@
-# New prompt ([gemini](https://gemini.google.com/app/7d30c20d349ce17b))
+# Il Cotonificio Egg di Piedimonte Matese
 
+A historical photo documentation website exploring the industrial and social history of the Egg Cotton Mill in Piedimonte Matese, Italy, through interactive maps and archival photographs.
 
-Act as a senior software engineer. I am refactoring a Jekyll site (Lanyon-based) into a high-integrity research database. We are moving from manual file management to a Python-driven data pipeline hosted on a VPS via Docker.
+## About the Project
 
-1. Data Architecture & Workflow:
-    Archive Layer: archive/ (private) holds raw scans/notes.
-    Source Layer: raw_data/ holds the "Master" files. Each entry is a [slug].md file and its primary [slug].jpg.
-    Generated Layer: site_source/_photos/ is an auto-generated Jekyll collection.
-    Editorial Layer: site_source/_topics/ contains manual Markdown essays.
+This Jekyll-based static website documents the history of the Cotonificio Egg, a cotton mill that profoundly shaped the economic and social life of Piedimonte Matese for over a century (1812-1943). The site combines historical research, archival photographs, and interactive mapping to tell the story of this significant chapter in Southern Italy's industrial history.
 
-2. Task: The Python Pipeline (scripts/process_research.py)
-Write a script using python-frontmatter and Pillow that:
+Founded by Swiss entrepreneur Gian Giacomo Egg during the Napoleonic era, the mill became the first mechanical spinning facility in the Kingdom of Naples and one of the largest industries in Southern Italy, at its peak employing over 1,300 workers.
 
-    Scans raw_data/*.md.
-    Validates: Ensures Frontmatter contains title, date, location: {lat, lng}, and labels.
-    Handles Variants: If the Frontmatter contains a variants list of image filenames, process those images in addition to the primary_image.
-    Image Processing: Optimizes images to assets/images/ and creates 150x150 square thumbnails in assets/thumbs/.
-    GeoJSON: Aggregates all photo locations into assets/data/points.geojson for a Leaflet map.
-    Collection Generation: Writes a new .md file to site_source/_photos/ for every entry, preserving your long-form research text from the body of the raw file.
+## Features
 
-3. Task: Jekyll Configuration & Relational Logic
+- **Historical Photo Collection**: Curated archival photographs with detailed metadata including dates, locations, and historical context
+- **Interactive Mapping**: Leaflet-based interactive maps displaying photo locations and historical geographic data
+- **GeoJSON Integration**: Geographic visualization of historical sites and photo origins
+- **Thematic Topics**: Research essays connecting multiple photographs and historical themes
+- **Responsive Design**: Built on the Lanyon theme for Jekyll, optimized for desktop and mobile viewing
 
-    _config.yml: Register photos and topics collections. Set output: true. Exclude archive/, raw_data/, and scripts/.
-    _layouts/topic.html: This layout must allow for a manual essay ({{ content }}). It must also use a featured_photos array (containing id and commentary) to "Join" with the photos collection using Liquid:
-    {% assign photo = site.photos | where: "slug", item.id | first %}.
-    _layouts/photo.html: Update to display the primary image, any variants listed in frontmatter, and the GeoJSON-ready coordinates.
+## Technology Stack
 
-4. Task: Infrastructure & Deployment
-    Dockerfile: Create a multi-stage build.
-        Stage 1: Python environment to run the processing script and generate the GeoJSON/Photos.
-        Stage 2: Ruby/Jekyll environment to build the site.
-        Stage 3: Minimal Nginx image to serve the _site/ output.
+- **Static Site Generator**: Jekyll 4.x
+- **Theme**: Lanyon (Poole-based)
+- **Mapping**: Leaflet.js with plugins for georaster layers and Bing maps
+- **Data Processing**: Python scripts for image optimization and GeoJSON generation
+- **Deployment**: Docker-based containerization for reproducible builds
+- **Hosting**: GitHub Pages compatible
 
-    .dockerignore: Explicitly exclude the archive/ folder to prevent leaking private research material.
+## Project Structure
 
-    Makefile: Create a make build command that orchestrates the Python script followed by the Jekyll build.
-
-5. Task: Asset Refactor
-Update the Lanyon template to move all public/ folder contents (CSS/JS) to assets/. Update _includes/head.html and sidebar.html to reflect these new paths.
-
-
-
-If you have four versions of the same bridge, and you discover a new fact about the bridge's architect, you now have to update four files. You will forget one, and your data will drift.
-
-The correct approach for a research project is the "Historical Object" Pattern: One Markdown file represents the event/object, and that file contains an array of visual representations.
-1. The "Parent-Variant" Structure
-
-Your raw_data/ file shouldn't just point to one image; it should point to a primary image and a list of variants.
-
-raw_data/monastery-facade.md
-
-```markdown
----
-title: "Main Facade - San Pasquale Monastery"
-primary_image: "monastery-facade-original.jpg"
-variants:
-  - file: "monastery-facade-restored-2024.jpg"
-    type: "Digital Restoration"
-    note: "Color corrected and noise reduced by MDA."
-  - file: "monastery-facade-crop-detail.jpg"
-    type: "Detail Crop"
-    note: "Focus on the stone carving above the main portal."
-location:
-  lat: 41.376
-  lng: 14.372
----
-This monastery facade was... (Your research goes here once).
+```
+.
+├── _photos/          # Photo collection (Jekyll collection)
+├── _topics/          # Thematic research essays (Jekyll collection)
+├── raw_data/         # Source data files with frontmatter
+├── assets/
+│   ├── photos/       # Optimized photo assets
+│   ├── thumbs/       # Generated thumbnails
+│   ├── data/         # GeoJSON and geographic data
+│   ├── css/          # Stylesheets
+│   └── js/           # JavaScript for maps and interactions
+├── _layouts/         # Jekyll layout templates
+├── _includes/        # Reusable template components
+└── scripts/          # Python processing scripts
 ```
 
-2. How the Python Script Handles This
+## Collections
 
-Your script needs to be slightly smarter now. Instead of looking for slug.jpg, it reads the primary_image and the variants array.
+### Photos
+Each photo entry contains:
+- Historical context and description
+- Geographic coordinates for mapping
+- Date and location information
+- Labels/tags for categorization
+- Image variants (original, restored, detail crops)
 
-    Process Primary: Resizes the main image and creates its thumbnail.
+### Topics
+Thematic essays that connect multiple photographs and explore specific aspects of the mill's history, such as architecture, social conditions, or industrial processes.
 
-    Process Variants: Loops through the variants list, resizes each one, and puts them into a sub-folder (e.g., assets/photos/variants/monastery-facade/).
+## Development
 
-    Generate MD: The generated Jekyll file in _photos/ will now have a list of all these processed paths in its frontmatter.
+### Local Setup
+
+```bash
+# Install dependencies
+bundle install
+
+# Serve locally
+bundle exec jekyll serve
+
+# Or using Docker
+docker-compose up
+```
+
+### Processing Photos
+
+Python scripts handle image optimization and metadata generation:
+
+```bash
+# Process raw data into Jekyll collections
+python scripts/process_research.py
+```
+
+## Data Workflow
+
+1. **Archive Layer**: `archive/` - Private raw scans and notes
+2. **Source Layer**: `raw_data/` - Master Markdown files with frontmatter
+3. **Generated Layer**: `_photos/` - Auto-generated Jekyll collection
+4. **Editorial Layer**: `_topics/` - Manual research essays
+5. **Assets**: Optimized images, thumbnails, and GeoJSON data
+
+## CDN Libraries
+
+All external dependencies are loaded via pinned CDN URLs (configured in `_config.yml`):
+- Leaflet 1.9.4 for mapping
+- jQuery 3.6.0 for DOM manipulation
+- Bootstrap 5.2.2 for UI components
+- Leaflet plugins for advanced mapping features
+
+## License
+
+See [LICENSE.md](LICENSE.md) for details.
+
+## Author
+
+**Mario D'Amore**  
+Email: maariodamore77@gmail.com
+
+---
+
+*"La nostra Liverpool"* - As Piedimonte Matese was sometimes called for its modern industrial organization comparable to the best European factories.
