@@ -4,6 +4,12 @@
 serve_old: ## Serve the Jekyll site locally using a podman container
 	podman run --rm -p 4000:4000 --name jekyll-lanyon -v "$$(pwd):/srv/jekyll" -it -w /srv/jekyll localhost/gh-pages:alpine jekyll serve --unpublished --future --host 0.0.0.0 --force_polling
 
+build-site: ## Build the Jekyll site (generates _site/ folder)
+	podman run --rm --name jekyll-lanyon-build -v "$$(pwd):/usr/src/app" -w /usr/src/app jekyll-lanyon:latest jekyll build --unpublished --future
+
+rsync-site: build-site ## Build and rsync the site to remote server
+	rsync -aP --info=,progress2 --update _site brapi-bamberga:/srv/container/cotonificio/data/
+
 build: ## Build the Docker image
 	podman-compose build
 
