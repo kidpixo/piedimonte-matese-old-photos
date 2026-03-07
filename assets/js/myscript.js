@@ -1,8 +1,9 @@
 // Constants and configuration for the map and layers
-// automatic URL detection for local or production environment
-const BASE_URL = window.location.hostname === "127.0.0.1"
-  ? "http://localhost:44000/assets/maps_data/"
-  : "https://kidpixo.github.io/leaflet-test/maps_data/";
+// Use window.location.origin for local dev to avoid CORS issues with 0.0.0.0 vs localhost
+// Use base_url from template for production
+const BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? window.location.origin + "/assets/maps_data/"
+  : base_url + "/assets/maps_data/";
 
 // Layer configuration: defines all options for each layer
 const LAYER_CONFIG = {
