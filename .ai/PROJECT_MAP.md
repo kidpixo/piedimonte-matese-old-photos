@@ -203,6 +203,40 @@ exclude:
 
 ---
 
+### Sidebar Collapsible Collection Navigation
+
+- **Pattern**: Each collection entry in the sidebar has two independent elements:
+  1. A clickable `<a>` link → collection index page (`/photos/`, `/topics/`, `/labels/`)
+  2. A Bootstrap `collapse` toggle button (chevron icon) → expands/collapses individual item list
+- **Why Bootstrap collapse over `<details>`**: `<details>/<summary>` is a single hit target — the entire `<summary>` toggles, making it impossible to have a separate link + separate toggle in the same row without JS hacks.
+- **Bootstrap global load**: Bootstrap CSS+JS moved from `photo.html` inline to `_includes/head.html` using `site.cdn_libs.*` values (Single Source of Truth already in `_config.yml`).
+- **Active state**: Use Jekyll's `page.collection` variable (equals `"photos"` for any `_photos/*.md`) to auto-expand the relevant section and add `active` class to the parent link.
+- **Collection index pages**: Standalone root markdown files (`photos.md`, `topics.md`) with explicit `permalink` override. **Not** inside `_photos/` or `_topics/` to avoid polluting `site.photos`/`site.topics` iteration.
+  - `photos.md` → `permalink: /photos/` — renders a grid/list of all `site.photos`
+  - `topics.md` → `permalink: /topics/` — renders a list of all `site.topics`
+  - `labels.md` already exists at `/labels/` (same pattern)
+
+**Sidebar HTML pattern:**
+```html
+<!-- Photos -->
+<div class="sidebar-collection-header">
+  <a href="/photos/" class="sidebar-nav-item{% if page.url == '/photos/' or page.collection == 'photos' %} active{% endif %}">
+    Photos ({{ site.photos.size }})
+  </a>
+  <button class="sidebar-collapse-toggle"
+          data-bs-toggle="collapse"
+          data-bs-target="#photos-list"
+          aria-expanded="{% if page.collection == 'photos' or page.url == '/photos/' %}true{% else %}false{% endif %}">
+    ▾
+  </button>
+</div>
+<div class="collapse {% if page.collection == 'photos' or page.url == '/photos/' %}show{% endif %}" id="photos-list">
+  <ul>...items...</ul>
+</div>
+```
+
+---
+
 ## Known Issues & Tech Debt
 
 | Issue | Status | Notes |
@@ -215,11 +249,14 @@ exclude:
 
 ## Next Steps (From README.md Tasks)
 
-- [ ] **Phase 1**: Create `scripts/process_research.py` (data pipeline)
-- [ ] **Phase 2**: Update `_config.yml` (Jekyll collections)
-- [ ] **Phase 3**: Create `_layouts/photo.html` and `_layouts/topic.html`
+- [x] **Phase 1**: Create `scripts/process_research.py` (data pipeline) ← **DONE**
+- [x] **Phase 2**: Update `_config.yml` (Jekyll collections) ← **DONE**
+- [x] **Phase 3**: Create `_layouts/photo.html` and `_layouts/topic.html` ← **DONE** (variants + GeoJSON overlays included)
+- [ ] **Phase 3.5**: Sidebar collapsible collection navigation ← **NEW**
 - [ ] **Phase 4**: Update Docker (multi-stage build)
 - [ ] **Phase 5**: Asset refactor (public/ → assets/)
+
+**Active backlog**: End-to-end test of per-photo GeoJSON overlay pipeline (`photoOriginGeoJson`/`Fov`/`Line` → `addIndividualGeoJsonLayers()`) via Docker build with real frontmatter data.
 
 ---
 

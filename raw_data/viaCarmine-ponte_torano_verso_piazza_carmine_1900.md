@@ -7,9 +7,6 @@ location:
     longitude_vertex_left: 14.37221629
     latitude_vertex_right: 41.35519581
     longitude_vertex_right: 14.37199924
-    origin_wkt: POINT (14.37159419 41.35528481)
-    line_of_sight_wkt: LINESTRING (14.37159419 41.35528481, 14.3718034 41.3552511)
-    fov_wkt: POLYGON ((14.37159419 41.35528481, 14.37221629 41.35534475, 14.37199924 41.35519581, 14.37159419 41.35528481))
 title: "Via Carmine ponte torano verso piazza Carmine circa 1900"
 images:
   - file: "ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg"

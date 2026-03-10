@@ -1,8 +1,8 @@
 .PHONY: help serve serve_old build up down logs clean
 .DEFAULT_GOAL := help
 
-serve_old: ## Serve the Jekyll site locally using a podman container
-	podman run --rm -p 4000:4000 --name jekyll-lanyon -v "$$(pwd):/srv/jekyll" -it -w /srv/jekyll localhost/gh-pages:alpine jekyll serve --unpublished --future --host 0.0.0.0 --force_polling
+process_photos : ## Process raw_data photos with script/process_photos.sh
+	python ./scripts/process_research.py
 
 build-site: ## Build the Jekyll site (generates _site/ folder)
 	podman run --rm --name jekyll-lanyon-build -v "$$(pwd):/usr/src/app" -w /usr/src/app jekyll-lanyon:latest bundle exec jekyll build --unpublished --future

@@ -18,13 +18,6 @@ Link [foto](https://www.facebook.com/photo/?fbid=1325412649632335)
 1. ![originale](Panorama_Piedimonte_da_MonteCila_tubi_anni60.jpg)
 2. ![restored](Panorama_Piedimonte_da_MonteCila_tubi_anni60_restored.jpg)
 
-## PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60.jpg
-
-Link [foto](https://www.facebook.com/photo/?fbid=10204223236557502)
-
-1. ![original](PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60.jpg)
-2. ![restored](PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg)
-
 
 ## Piazza_Carmine-anni-1940-1950.jpg
 
