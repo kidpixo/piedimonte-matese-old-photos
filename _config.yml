@@ -2,7 +2,8 @@
 title:               'Il Cotonificio Egg di Piedimonte Matese'
 tagline:             'Una Storia Industriale e Sociale Attraverso le Mappe'
 description:         'La storia del Cotonificio Egg di Piedimonte Matese, esplorando la sua evoluzione industriale e sociale attraverso mappe interattive e dati storici.'
-url:                 'https://kidpixo.github.io/piedimonte-matese-old-photos/'
+url:                 ''
+# url:                 'https://kidpixo.github.io/piedimonte-matese-old-photos/'
 baseurl:             ''  # Empty if deployed at root, or '/repo-name' if project site
 
 permalink:           pretty
