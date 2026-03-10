@@ -139,8 +139,26 @@ This monastery facade was... (Research text here)
 | Site Generator | Jekyll 4.x | Ruby 3.2 (github-pages compatible) |
 | Frontend | HTML/CSS/JavaScript | Leaflet.js (CDN) for maps |
 | Styling | CSS (Lanyon theme) | Moving from `public/` to `assets/` |
+| UI Components | Bootstrap 5.2.2 | Loaded globally in `head.html`; collapse for sidebar, badges for labels |
+| Tables | DataTables 2.2.2 | Bootstrap 5 integration with jQuery plugin; sortable/searchable tables in `/photos/` and `/labels/` |
+| JavaScript Runtime | jQuery 3.6.0 | Required by DataTables CDN variant; loaded before DataTables |
 | Container | Docker multi-stage | Python → Jekyll → Nginx |
 | Deployment | VPS + optional GH Pages | Docker Compose on VPS |
+
+## Features
+
+### Photo Browsing
+- **`/photos/`** - All photos in sortable, filterable DataTable (columns: Thumbnail, Title, Year, Labels, Map)  
+- **`/labels/`** - Photos filtered by label with label selector badges and slug-based pre-filtering  
+- **URL parameters** - `?label=slug` on `/photos/` and `?tag=slug` on `/labels/` for deep linking
+
+### DataTables Controls (All Layouts)
+- Sortable columns (Mappa column now sortable)
+- Global text search across photo titles and descriptions
+- Entries-per-page selector (10, 25, 50, 100)
+- Pagination with page info
+- Italian language localization
+- Bootstrap 5 responsive styling
 
 ---
 
@@ -180,6 +198,15 @@ exclude:
 | `assets/data/` | Folder | GeoJSON and metadata |
 | `_site/` | Output | Final HTML (deployment target) |
 | `scripts/process_research.py` | Script | Python ETL pipeline |
+| `_layouts/photo.html` | Layout | Individual photo detail page (variants, GeoJSON map) |
+| `_layouts/topic.html` | Layout | Editorial topic page (linked photos) |
+| `_layouts/label.html` | Layout | Label index + `?tag=` filtered view (client-side SPA) |
+| `_layouts/photos_index.html` | Layout | `/photos/` index with DataTables (sortable, filterable) |
+| `photos.md` | Page | Collection index at `/photos/`; uses `photos_index` layout; `exclude_from_nav: true` |
+| `topics.md` | Page | Collection index at `/topics/`; uses `page` layout; `exclude_from_nav: true` |
+| `labels.md` | Page | Label index at `/labels/` |
+| `_includes/head.html` | Include | Global `<head>`; loads Bootstrap CSS+JS globally via `cdn_libs` |
+| `_includes/sidebar.html` | Include | Collapsible collection nav (Bootstrap collapse, CSS `+`/`−` toggle) |
 
 ---
 
@@ -227,9 +254,16 @@ exclude:
           data-bs-toggle="collapse"
           data-bs-target="#photos-list"
           aria-expanded="{% if page.collection == 'photos' or page.url == '/photos/' %}true{% else %}false{% endif %}">
-    ▾
+    <!-- empty: CSS ::before renders + or − based on aria-expanded -->
   </button>
 </div>
+
+**Toggle CSS pattern** (in `assets/css/lanyon.css`):
+```css
+.sidebar-collapse-toggle::before { content: "+"; }
+.sidebar-collapse-toggle[aria-expanded="true"]::before { content: "\2212"; } /* − minus sign */
+```
+Bootstrap automatically updates `aria-expanded` on the button — no custom JS required.
 <div class="collapse {% if page.collection == 'photos' or page.url == '/photos/' %}show{% endif %}" id="photos-list">
   <ul>...items...</ul>
 </div>
@@ -242,6 +276,7 @@ exclude:
 | Issue | Status | Notes |
 |-------|--------|-------|
 | Ruby 3.3 incompatible | ✅ Fixed | Downgraded to 3.2 for jekyll compatibility |
+| Bootstrap duplication | ✅ Fixed | Moved to global `head.html`; removed inline copies from `photo.html`, `label.html` |
 | Multi-stage Docker | Planned | Need Stage 1: Python, Stage 2: Jekyll, Stage 3: Nginx |
 | Asset migration | Pending | Move `public/` CSS/JS to `assets/` |
 
@@ -252,8 +287,10 @@ exclude:
 - [x] **Phase 1**: Create `scripts/process_research.py` (data pipeline) ← **DONE**
 - [x] **Phase 2**: Update `_config.yml` (Jekyll collections) ← **DONE**
 - [x] **Phase 3**: Create `_layouts/photo.html` and `_layouts/topic.html` ← **DONE** (variants + GeoJSON overlays included)
-- [ ] **Phase 3.5**: Sidebar collapsible collection navigation ← **NEW**
-- [ ] **Phase 4**: Update Docker (multi-stage build)
+- [x] **Phase 3.5**: Sidebar collapsible collection navigation ← **DONE**
+- [x] **Phase 3.5**: Sidebar collapsible collection navigation ← **DONE**
+- [x] **Phase 3.6**: `/photos/` index with DataTables (`_layouts/photos_index.html`) ← **DONE**
+- [ ] **Phase 4**: Update Docker (multi-stage build) ← **NEXT**
 - [ ] **Phase 5**: Asset refactor (public/ → assets/)
 
 **Active backlog**: End-to-end test of per-photo GeoJSON overlay pipeline (`photoOriginGeoJson`/`Fov`/`Line` → `addIndividualGeoJsonLayers()`) via Docker build with real frontmatter data.

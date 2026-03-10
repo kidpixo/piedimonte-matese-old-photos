@@ -2,537 +2,174 @@
 layout: default
 ---
 
-<!-- Load Bootstrap for grid layout -->
-<link href="{{ site.cdn_libs.bootstrap_css }}" rel="stylesheet" />
-<script src="{{ site.cdn_libs.bootstrap_js }}"></script>
-
-{% comment %}
-  Extract the 'tag' query parameter from the URL using JavaScript
-  and pass it to Jekyll via a data attribute (client-side fallback)
-  For now, we'll show all labels and let JavaScript filter client-side.
-{% endcomment %}
+<link rel="stylesheet" href="{{ site.cdn_libs.datatables_css }}">
+<script src="{{ site.cdn_libs.jquery }}"></script>
+<script src="{{ site.cdn_libs.datatables_js }}"></script>
+<script src="{{ site.cdn_libs.datatables_bs5_js }}"></script>
 
 <article class="label-container">
-  <header class="label-header">
+  <header class="label-header mb-3">
     <h1 class="page-title">Foto per Etichetta</h1>
-    <p class="message">Esplora le foto raggruppate per tema</p>
+    <p class="message">Vista semplificata con tabella filtrabile</p>
   </header>
 
-  <div class="label-content">
-    {% comment %}
-      Build a unique list of labels with photo counts.
-      This serves as the main index; clicking a label filters via URL param.
-    {% endcomment %}
-    
-    <div id="labels-index">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Tutte le etichette</h3>
-        <div class="btn-group btn-group-sm" role="group" aria-label="View toggle">
-          <button type="button" class="btn btn-outline-secondary active" id="grid-view-btn" onclick="toggleView('grid')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
-            </svg>
-            Grid
-          </button>
-          <button type="button" class="btn btn-outline-secondary" id="list-view-btn" onclick="toggleView('list')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-            </svg>
-            List
-          </button>
-        </div>
-      </div>
+  {% assign all_labels = "" | split: "" %}
+  {% for photo in site.photos %}
+    {% if photo.labels %}
+      {% for label in photo.labels %}
+        {% unless all_labels contains label %}
+          {% assign all_labels = all_labels | push: label %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
 
-      <!-- Grid View -->
-      <div class="labels-grid row g-3" id="labels-grid-view">
-        {% assign all_labels = "" | split: "" %}
-        {% for photo in site.photos %}
-          {% if photo.labels %}
-            {% for label in photo.labels %}
-              {% unless all_labels contains label %}
-                {% assign all_labels = all_labels | push: label %}
-              {% endunless %}
-            {% endfor %}
+  {% assign all_labels = all_labels | sort %}
+
+  <div class="mb-3">
+    <a href="{{ '/labels/' | relative_url }}" class="badge text-bg-light text-decoration-none me-1 mb-1">Tutte</a>
+    {% for label in all_labels %}
+      {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
+      {% assign label_count = 0 %}
+      {% for photo in site.photos %}
+        {% if photo.labels contains label %}
+          {% assign label_count = label_count | plus: 1 %}
+        {% endif %}
+      {% endfor %}
+      <a href="{{ '/labels/' | relative_url }}?tag={{ label_slug }}"
+         class="badge text-bg-secondary text-decoration-none me-1 mb-1"
+         data-label-slug="{{ label_slug }}">{{ label }} ({{ label_count }})</a>
+    {% endfor %}
+  </div>
+
+  <div class="table-responsive">
+    <table id="labels-photos-table" class="table table-striped table-hover table-sm align-middle" style="width:100%">
+      <thead>
+        <tr>
+          <th style="width:56px">Foto</th>
+          <th>Titolo</th>
+          <th style="width:90px">Anno</th>
+          <th>Etichette</th>
+          <th style="width:60px">Mappa</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% assign photos_sorted = site.photos | sort: "date" | reverse %}
+        {% for photo in photos_sorted %}
+          {% assign has_map = false %}
+          {% if photo.location.latitude_origin and photo.location.longitude_origin %}
+            {% assign has_map = true %}
           {% endif %}
-        {% endfor %}
-
-        {% assign all_labels = all_labels | sort %}
-        {% for label in all_labels %}
-          {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
-          {% assign label_count = 0 %}
-          {% for photo in site.photos %}
-            {% if photo.labels contains label %}
-              {% assign label_count = label_count | plus: 1 %}
-            {% endif %}
-          {% endfor %}
-          <div class="col-6 col-md-4 col-lg-3">
-            <div class="card h-100 label-card">
-              <div class="card-body text-center">
-                <a href="{{ '/labels/' | relative_url }}?tag={{ label_slug }}" class="text-decoration-none stretched-link">
-                  <h5 class="card-title">{{ label }}</h5>
-                  <p class="card-text text-muted">{{ label_count }} foto</p>
-                </a>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-
-      <!-- List View -->
-      <div class="list-group" id="labels-list-view" style="display: none;">
-        {% for label in all_labels %}
-          {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
-          {% assign label_count = 0 %}
-          {% for photo in site.photos %}
-            {% if photo.labels contains label %}
-              {% assign label_count = label_count | plus: 1 %}
-            {% endif %}
-          {% endfor %}
-          <a href="{{ '/labels/' | relative_url }}?tag={{ label_slug }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <strong>{{ label }}</strong>
-            <span class="badge bg-secondary rounded-pill">{{ label_count }}</span>
-          </a>
-        {% endfor %}
-      </div>
-    </div>
-
-    <hr>
-
-    {% comment %}
-      Filtered view: show only photos matching the 'tag' query param.
-      For this to work, we'll need a simple JavaScript to parse the URL
-      and set a data attribute (since Jekyll doesn't have access to query params at build time).
-    {% endcomment %}
-    <div id="labels-filtered" style="display: none;">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 id="filtered-label-title">
-          Foto con etichetta: <span id="filtered-label-name" class="text-muted"></span>
-        </h3>
-        <div class="btn-group btn-group-sm" role="group" aria-label="View toggle">
-          <button type="button" class="btn btn-outline-secondary active" id="grid-view-btn-filtered" onclick="toggleFilteredView('grid')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
-            </svg>
-            Grid
-          </button>
-          <button type="button" class="btn btn-outline-secondary" id="list-view-btn-filtered" onclick="toggleFilteredView('list')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-            </svg>
-            List
-          </button>
-        </div>
-      </div>
-
-      <!-- Search and Sort Controls -->
-      <div class="row mb-3 g-2">
-        <div class="col-md-6">
-          <input type="text" class="form-control" id="photo-search" placeholder="Cerca foto per titolo...">
-        </div>
-        <div class="col-md-4">
-          <select class="form-select" id="photo-sort" onchange="sortPhotos()">
-            <option value="title-asc">Titolo (A-Z)</option>
-            <option value="title-desc">Titolo (Z-A)</option>
-            <option value="date-desc" selected>Data (più recente)</option>
-            <option value="date-asc">Data (più vecchia)</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <select class="form-select" id="photos-per-page" onchange="updatePagination()">
-            <option value="12" selected>12 per pagina</option>
-            <option value="24">24 per pagina</option>
-            <option value="48">48 per pagina</option>
-            <option value="all">Tutte</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <small class="text-muted" id="photo-count"></small>
-        <small class="text-muted" id="page-info"></small>
-      </div>
-
-      <section class="label-gallery">
-        {% assign all_labels = "" | split: "" %}
-        {% for photo in site.photos %}
+          {% assign row_label_slugs = "" %}
           {% if photo.labels %}
-            {% for label in photo.labels %}
-              {% unless all_labels contains label %}
-                {% assign all_labels = all_labels | push: label %}
-              {% endunless %}
-            {% endfor %}
-          {% endif %}
-        {% endfor %}
-
-        {% for label in all_labels %}
-          {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
-          
-          <!-- Grid View for Photos -->
-          <div class="label-photos row g-3" data-label="{{ label_slug }}" id="photos-grid-{{ label_slug }}" style="display: none;">
-            {% for photo in site.photos %}
-              {% if photo.labels contains label %}
-                {% assign photo_thumb = photo.processed_primary_thumb | default: photo.processed_primary_image | default: photo.primary_image %}
-                <div class="col-sm-6 col-md-4 col-lg-3 photo-item" data-title="{{ photo.title | downcase }}" data-date="{{ photo.date | date: '%Y%m%d' }}" data-date-display="{{ photo.date | date: '%Y-%m-%d' }}">
-                  <div class="card h-100">
-                    <a href="{{ photo.url | relative_url }}">
-                      {% if photo_thumb %}
-                        <img src="{{ photo_thumb | relative_url }}" class="card-img-top" alt="{{ photo.title }}" style="height: 200px; object-fit: cover;">
-                      {% endif %}
-                    </a>
-                    <div class="card-body">
-                      <h6 class="card-title">{{ photo.title }}</h6>
-                      {% if photo.date %}
-                        <p class="card-text small text-muted">{{ photo.date | date: "%Y-%m-%d" }}</p>
-                      {% endif %}
-                      <a href="{{ photo.url | relative_url }}" class="btn btn-sm btn-outline-primary">Dettagli &rarr;</a>
-                    </div>
-                  </div>
-                </div>
+            {% assign labels_sorted = photo.labels | sort %}
+            {% for label in labels_sorted %}
+              {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
+              {% if row_label_slugs == "" %}
+                {% assign row_label_slugs = label_slug %}
+              {% else %}
+                {% assign row_label_slugs = row_label_slugs | append: "|" | append: label_slug %}
               {% endif %}
             {% endfor %}
-          </div>
-
-          <!-- List View for Photos -->
-          <div class="list-group label-photos" data-label="{{ label_slug }}" id="photos-list-{{ label_slug }}" style="display: none;">
-            {% for photo in site.photos %}
-              {% if photo.labels contains label %}
-                {% assign photo_thumb = photo.processed_primary_thumb | default: photo.processed_primary_image | default: photo.primary_image %}
-                <a href="{{ photo.url | relative_url }}" class="list-group-item list-group-item-action photo-item" data-title="{{ photo.title | downcase }}" data-date="{{ photo.date | date: '%Y%m%d' }}" data-date-display="{{ photo.date | date: '%Y-%m-%d' }}">
-                  <div class="d-flex w-100 align-items-center">
-                    {% if photo_thumb %}
-                      <img src="{{ photo_thumb | relative_url }}" alt="{{ photo.title }}" style="width: 80px; height: 80px; object-fit: cover; margin-right: 1rem; border-radius: 4px;">
-                    {% endif %}
-                    <div class="flex-grow-1">
-                      <h6 class="mb-1">{{ photo.title }}</h6>
-                      {% if photo.date %}
-                        <small class="text-muted">{{ photo.date | date: "%Y-%m-%d" }}</small>
-                      {% endif %}
-                    </div>
-                  </div>
+          {% endif %}
+          {% assign thumb = photo.processed_primary_thumb | default: photo.processed_primary_image | default: photo.primary_image %}
+          <tr data-label-slugs="{{ row_label_slugs }}">
+            <td>
+              {% if thumb %}
+                <a href="{{ photo.url | relative_url }}">
+                  <img src="{{ thumb | relative_url }}"
+                       alt="{{ photo.title }}"
+                       width="40" height="40"
+                       loading="lazy"
+                       style="object-fit: cover; border-radius: 3px;">
                 </a>
               {% endif %}
-            {% endfor %}
-          </div>
+            </td>
+            <td>
+              <a href="{{ photo.url | relative_url }}">{{ photo.title }}</a>
+            </td>
+            <td>{{ photo.date | date: "%Y" }}</td>
+            <td>
+              {% if photo.labels %}
+                {% assign labels_sorted = photo.labels | sort %}
+                {% for label in labels_sorted %}
+                  {% assign label_slug = label | downcase | replace: " ", "-" | replace: "_", "-" %}
+                  <a href="{{ '/labels/' | relative_url }}?tag={{ label_slug }}" class="badge text-bg-secondary text-decoration-none" data-label-slug="{{ label_slug }}">{{ label }}</a>
+                {% endfor %}
+              {% endif %}
+            </td>
+            <td class="text-center">{% if has_map %}✓{% endif %}</td>
+          </tr>
         {% endfor %}
-      </section>
-
-      <!-- Pagination Controls -->
-      <nav aria-label="Photo pagination" class="mt-4">
-        <ul class="pagination justify-content-center" id="pagination-controls">
-          <!-- Dynamically generated -->
-        </ul>
-      </nav>
-    </div>
-
-    <script>
-      // Global state
-      let allPhotos = [];
-      let filteredPhotos = [];
-      let currentPage = 1;
-      let currentTag = null;
-      let currentView = 'grid';
-
-      // View toggle for labels index
-      function toggleView(view) {
-        const gridView = document.getElementById('labels-grid-view');
-        const listView = document.getElementById('labels-list-view');
-        const gridBtn = document.getElementById('grid-view-btn');
-        const listBtn = document.getElementById('list-view-btn');
-        
-        if (view === 'grid') {
-          gridView.style.display = 'flex';
-          listView.style.display = 'none';
-          gridBtn.classList.add('active');
-          listBtn.classList.remove('active');
-          localStorage.setItem('labelView', 'grid');
-        } else {
-          gridView.style.display = 'none';
-          listView.style.display = 'block';
-          gridBtn.classList.remove('active');
-          listBtn.classList.add('active');
-          localStorage.setItem('labelView', 'list');
-        }
-      }
-
-      // View toggle for filtered photos
-      function toggleFilteredView(view) {
-        currentView = view;
-        const gridBtn = document.getElementById('grid-view-btn-filtered');
-        const listBtn = document.getElementById('list-view-btn-filtered');
-        
-        if (view === 'grid') {
-          gridBtn.classList.add('active');
-          listBtn.classList.remove('active');
-          localStorage.setItem('photoView', 'grid');
-        } else {
-          gridBtn.classList.remove('active');
-          listBtn.classList.add('active');
-          localStorage.setItem('photoView', 'list');
-        }
-        
-        renderPhotos();
-      }
-
-      // Collect all photo data from DOM
-      function collectPhotos() {
-        if (!currentTag) return;
-        
-        const gridContainer = document.getElementById('photos-grid-' + currentTag);
-        const listContainer = document.getElementById('photos-list-' + currentTag);
-        
-        if (!gridContainer) return;
-        
-        allPhotos = [];
-        const photoItems = gridContainer.querySelectorAll('.photo-item');
-        
-        photoItems.forEach((item, index) => {
-          allPhotos.push({
-            element: item,
-            title: item.getAttribute('data-title'),
-            date: item.getAttribute('data-date'),
-            dateDisplay: item.getAttribute('data-date-display'),
-            index: index
-          });
-        });
-        
-        filteredPhotos = [...allPhotos];
-      }
-
-      // Search photos
-      function searchPhotos() {
-        const searchTerm = document.getElementById('photo-search').value.toLowerCase();
-        
-        if (searchTerm === '') {
-          filteredPhotos = [...allPhotos];
-        } else {
-          filteredPhotos = allPhotos.filter(photo => 
-            photo.title.includes(searchTerm)
-          );
-        }
-        
-        currentPage = 1;
-        updatePagination();
-      }
-
-      // Sort photos
-      function sortPhotos() {
-        const sortBy = document.getElementById('photo-sort').value;
-        
-        filteredPhotos.sort((a, b) => {
-          if (sortBy === 'title-asc') {
-            return a.title.localeCompare(b.title);
-          } else if (sortBy === 'title-desc') {
-            return b.title.localeCompare(a.title);
-          } else if (sortBy === 'date-asc') {
-            return (a.date || '0').localeCompare(b.date || '0');
-          } else if (sortBy === 'date-desc') {
-            return (b.date || '0').localeCompare(a.date || '0');
-          }
-          return 0;
-        });
-        
-        currentPage = 1;
-        updatePagination();
-      }
-
-      // Update pagination and render
-      function updatePagination() {
-        const perPage = document.getElementById('photos-per-page').value;
-        const totalPhotos = filteredPhotos.length;
-        
-        // Update count
-        document.getElementById('photo-count').textContent = 
-          `Showing ${totalPhotos} foto${totalPhotos !== 1 ? '' : ''}`;
-        
-        if (perPage === 'all') {
-          currentPage = 1;
-          renderPhotos();
-          renderPaginationControls(1, 1, totalPhotos);
-        } else {
-          const photosPerPage = parseInt(perPage);
-          const totalPages = Math.ceil(totalPhotos / photosPerPage);
-          
-          // Ensure current page is valid
-          if (currentPage > totalPages) currentPage = totalPages || 1;
-          
-          renderPhotos();
-          renderPaginationControls(currentPage, totalPages, totalPhotos);
-        }
-      }
-
-      // Render photos based on current page and filters
-      function renderPhotos() {
-        if (!currentTag) return;
-        
-        const perPage = document.getElementById('photos-per-page').value;
-        const photosPerPage = perPage === 'all' ? filteredPhotos.length : parseInt(perPage);
-        
-        const startIdx = (currentPage - 1) * photosPerPage;
-        const endIdx = startIdx + photosPerPage;
-        const photosToShow = filteredPhotos.slice(startIdx, endIdx);
-        
-        const gridContainer = document.getElementById('photos-grid-' + currentTag);
-        const listContainer = document.getElementById('photos-list-' + currentTag);
-        
-        if (!gridContainer || !listContainer) return;
-        
-        // Hide all photos
-        const allItems = gridContainer.querySelectorAll('.photo-item');
-        allItems.forEach(item => item.style.display = 'none');
-        
-        const allListItems = listContainer.querySelectorAll('.photo-item');
-        allListItems.forEach(item => item.style.display = 'none');
-        
-        // Show current page photos in correct order
-        photosToShow.forEach((photo, displayIndex) => {
-          const gridItem = gridContainer.children[photo.index];
-          const listItem = listContainer.children[photo.index];
-          
-          if (currentView === 'grid' && gridItem) {
-            gridItem.style.display = '';
-            gridItem.style.order = displayIndex;
-          } else if (currentView === 'list' && listItem) {
-            listItem.style.display = '';
-            listItem.style.order = displayIndex;
-          }
-        });
-        
-        // Update view visibility
-        if (currentView === 'grid') {
-          gridContainer.style.display = 'flex';
-          listContainer.style.display = 'none';
-        } else {
-          gridContainer.style.display = 'none';
-          listContainer.style.display = 'block';
-        }
-        
-        // Update page info
-        const start = filteredPhotos.length === 0 ? 0 : startIdx + 1;
-        const end = Math.min(endIdx, filteredPhotos.length);
-        document.getElementById('page-info').textContent = 
-          `${start}-${end} of ${filteredPhotos.length}`;
-      }
-
-      // Render pagination controls
-      function renderPaginationControls(currentPageNum, totalPages, totalPhotos) {
-        const container = document.getElementById('pagination-controls');
-        container.innerHTML = '';
-        
-        if (totalPages <= 1 || totalPhotos === 0) {
-          return;
-        }
-        
-        // Previous button
-        const prevLi = document.createElement('li');
-        prevLi.className = 'page-item' + (currentPageNum === 1 ? ' disabled' : '');
-        prevLi.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${currentPageNum - 1}); return false;">Previous</a>`;
-        container.appendChild(prevLi);
-        
-        // Page numbers (show max 7: first, ..., current-1, current, current+1, ..., last)
-        const pagesToShow = [];
-        
-        if (totalPages <= 7) {
-          for (let i = 1; i <= totalPages; i++) {
-            pagesToShow.push(i);
-          }
-        } else {
-          pagesToShow.push(1);
-          
-          if (currentPageNum > 3) {
-            pagesToShow.push('...');
-          }
-          
-          for (let i = Math.max(2, currentPageNum - 1); i <= Math.min(totalPages - 1, currentPageNum + 1); i++) {
-            if (!pagesToShow.includes(i)) {
-              pagesToShow.push(i);
-            }
-          }
-          
-          if (currentPageNum < totalPages - 2) {
-            pagesToShow.push('...');
-          }
-          
-          pagesToShow.push(totalPages);
-        }
-        
-        pagesToShow.forEach(page => {
-          const li = document.createElement('li');
-          
-          if (page === '...') {
-            li.className = 'page-item disabled';
-            li.innerHTML = '<span class="page-link">...</span>';
-          } else {
-            li.className = 'page-item' + (page === currentPageNum ? ' active' : '');
-            li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${page}); return false;">${page}</a>`;
-          }
-          
-          container.appendChild(li);
-        });
-        
-        // Next button
-        const nextLi = document.createElement('li');
-        nextLi.className = 'page-item' + (currentPageNum === totalPages ? ' disabled' : '');
-        nextLi.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${currentPageNum + 1}); return false;">Next</a>`;
-        container.appendChild(nextLi);
-      }
-
-      // Go to specific page
-      function goToPage(page) {
-        const perPage = document.getElementById('photos-per-page').value;
-        if (perPage === 'all') return;
-        
-        const photosPerPage = parseInt(perPage);
-        const totalPages = Math.ceil(filteredPhotos.length / photosPerPage);
-        
-        if (page < 1 || page > totalPages) return;
-        
-        currentPage = page;
-        updatePagination();
-        
-        // Scroll to top of results
-        document.getElementById('labels-filtered').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      // Initialize on page load
-      document.addEventListener('DOMContentLoaded', function() {
-        const params = new URLSearchParams(window.location.search);
-        const tag = params.get('tag');
-        
-        // Restore saved view preferences
-        const savedLabelView = localStorage.getItem('labelView') || 'grid';
-        const savedPhotoView = localStorage.getItem('photoView') || 'grid';
-        
-        if (tag) {
-          currentTag = tag;
-          currentView = savedPhotoView;
-          
-          // Show filtered view
-          document.getElementById('labels-index').style.display = 'none';
-          document.getElementById('labels-filtered').style.display = 'block';
-          
-          const gridView = document.getElementById('photos-grid-' + tag);
-          const listView = document.getElementById('photos-list-' + tag);
-          
-          if (gridView || listView) {
-            document.getElementById('filtered-label-name').textContent = tag.replace(/-/g, ' ');
-            
-            // Collect photos and initialize
-            collectPhotos();
-            
-            // Set up event listeners
-            document.getElementById('photo-search').addEventListener('input', searchPhotos);
-            
-            // Initialize view
-            toggleFilteredView(savedPhotoView);
-            
-            // Initialize with default sort (date-desc)
-            sortPhotos();
-          }
-        } else {
-          // Show index view with saved preference
-          toggleView(savedLabelView);
-        }
-      });
-    </script>
+      </tbody>
+    </table>
   </div>
 </article>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const prefilterSlug = (params.get('tag') || '').trim().toLowerCase();
+
+    if (prefilterSlug) {
+      const tbody = document.querySelector('#labels-photos-table tbody');
+      if (tbody) {
+        Array.from(tbody.querySelectorAll('tr')).forEach(function (row) {
+          const rowSlugs = (row.getAttribute('data-label-slugs') || '').toLowerCase();
+          const hasSlug = rowSlugs.split('|').includes(prefilterSlug);
+          if (!hasSlug) {
+            row.remove();
+          }
+        });
+      }
+    }
+
+    const dtOptions = {
+      order: [[2, 'desc']],
+      ordering: true,
+      searching: true,
+      paging: true,
+      info: true,
+      lengthChange: true,
+      pageLength: 25,
+      lengthMenu: [10, 25, 50, 100],
+      dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
+      columnDefs: [
+        { searchable: false, orderable: false, targets: [0] }
+      ],
+      language: {
+        search: 'Cerca:',
+        lengthMenu: 'Mostra _MENU_ foto',
+        info: 'Da _START_ a _END_ di _TOTAL_ foto',
+        infoEmpty: 'Nessuna foto trovata',
+        infoFiltered: '(filtrate da _MAX_ totali)',
+        zeroRecords: 'Nessuna corrispondenza trovata',
+        paginate: {
+          first: 'Prima',
+          last: 'Ultima',
+          next: 'Avanti',
+          previous: 'Indietro'
+        }
+      }
+    };
+
+    let table = null;
+    if (typeof DataTable !== 'undefined') {
+      table = new DataTable('#labels-photos-table', dtOptions);
+    } else if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
+      table = jQuery('#labels-photos-table').DataTable(dtOptions);
+    } else {
+      console.error('DataTables is not loaded. Check cdn_libs.jquery/datatables_js/datatables_bs5_js.');
+      return;
+    }
+
+    if (prefilterSlug) {
+      document.querySelectorAll('[data-label-slug]').forEach(function (el) {
+        if (el.getAttribute('data-label-slug') === prefilterSlug) {
+          el.classList.remove('text-bg-secondary');
+          el.classList.add('text-bg-primary');
+        }
+      });
+    }
+  });
+</script>

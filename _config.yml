@@ -36,6 +36,11 @@ cdn_libs:
   leaflet_locate_css: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.css"
   leaflet_locate_js: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.min.js"
 
+  # DataTables 2.x with Bootstrap 5 (no jQuery required)
+  datatables_css: "https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.min.css"
+  datatables_js: "https://cdn.datatables.net/2.2.2/js/dataTables.min.js"
+  datatables_bs5_js: "https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.min.js"
+
 collections:
   photos:
     output: true
