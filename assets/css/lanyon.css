@@ -190,18 +190,6 @@ a.sidebar-nav-item:focus {
   border-color: transparent;
 }
 
-/* Map location indicator icon */
-.sidebar-nav-item .bi-map {
-  margin-left: 4px;
-  opacity: 0.6;
-  vertical-align: middle;
-  transition: opacity 0.2s ease;
-}
-
-a.sidebar-nav-item:hover .bi-map {
-  opacity: 0.9;
-}
-
 /* Collapsible submenu styles */
 .sidebar-submenu summary {
   cursor: pointer;

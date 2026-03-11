@@ -18,6 +18,9 @@ up: ## Start Jekyll server in Docker (detached)
 
 serve: up ## Alias for 'up' - Start Jekyll server in Docker
 
+serve-dev: ## Serve with development configuration
+	podman-compose -f docker-compose_dev.yml up
+
 down: ## Stop and remove Docker containers
 	podman-compose down
 

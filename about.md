@@ -1,29 +1,53 @@
 ---
 layout: page
-title: About
+title: Chi Siamo
 ---
 
-<p class="message">
-  Hey there! This page is included as an example. Feel free to customize it for your own use upon downloading. Carry on!
-</p>
+**Un Progetto di Ricerca e Conservazione della Memoria**
 
-In the novel, *The Strange Case of Dr. Jeykll and Mr. Hyde*, Mr. Poole is Dr. Jekyll's virtuous and loyal butler. Similarly, Poole is an upstanding and effective butler that helps you build Jekyll themes. It's made by [@mdo](https://twitter.com/mdo).
+Questo sito rappresenta uno sforzo collettivo per preservare e valorizzare la memoria storica del Cotonificio Egg di Piedimonte Matese, uno dei più importanti stabilimenti industriali dell'Italia meridionale tra il XIX e il XX secolo.
 
-There are currently two themes built on Poole:
+Il nostro progetto nasce dalla convinzione che la storia locale merita lo stesso rigore e l'attenzione rivolta alle grandi narrazioni nazionali. Attraverso la georeferenziazione di documenti storici, fotografie d'epoca e mappe antiche, vogliamo restituire una prospettiva multidimensionale di questo patrimonio perduto.
 
-* [Hyde](http://hyde.getpoole.com)
-* [Lanyon](http://lanyon.getpoole.com)
+## La Missione
 
-Learn more and contribute on [GitHub](https://github.com/poole).
+Documentare, georeferenziare e rendere accessibile il patrimonio storiografico legato al Cotonificio Egg, permettendo a ricercatori, studenti e cittadini di comprendere le trasformazioni urbane e sociali di Piedimonte Matese nel corso dei secoli.
 
-## Setup
+## Le Fonti
 
-Some fun facts about the setup of this project include:
+I materiali presentati in questo database provengono da:
 
-* Built for [Jekyll](https://jekyllrb.com)
-* Developed on GitHub and hosted for free on [GitHub Pages](https://pages.github.com)
-* Coded with [Atom](https://atom.io)
+- **Gruppo Memorie Storiche**: Ricercatori locali custodi di documenti e testimonianze storiche
+- **Archivi e Collezioni Private**: Mappe, fotografie e documenti rinvenuti nel corso degli anni
+- **Contributi della Comunità**: Foto storiche, testimonianze orali e ricordi dei cittadini
+- **Indagini Archeologiche Informali**: Mappature del sotterraneo scoperto nei primi anni '90
 
-Have questions or suggestions? Feel free to [open an issue on GitHub](https://github.com/poole/issues/new) or [ask me on Twitter](https://twitter.com/mdo).
+## Metodologia
 
-Thanks for reading!
+Il lavoro di georeferenziazione presenta sfide significative dovute:
+
+- Alla variabilità dei sistemi di coordinate storici
+- Alla necessità di identificare punti di ancoraggio affidabili
+- Alla distorsione delle mappe antiche
+- All'evoluzione urbana che ha cancellato landmark d'epoca
+
+Nonostante queste difficoltà, il risultato è un database interattivo che sincronizza immagini, mappe e cronologie in uno spazio geospaziale coerente.
+
+## Collaborazioni e Contributi
+
+Questo progetto non sarebbe possibile senza il contributo di:
+
+- I ricercatori che mantengono viva la memoria storica locale
+- I cittadini che condividono foto, documenti e ricordi
+- Gli archivisti e i custodi del patrimonio
+- La comunità di Piedimonte Matese che continua a interessarsi alla propria storia
+
+## Contatti e Collaborazioni
+
+Se possiedi informazioni, documenti, foto o ricordi legati al Cotonificio Egg, sei invitato a contattarci. Le tue testimonianze sono preziose per completare questo quadro storico.
+
+Se desideri collaborare al progetto, proporre ricerche o suggerire integrazioni, saremo felici di ascoltare i tuoi contributi.
+
+---
+
+*Dedicheremo sempre spazio a chi vuole partecipare a questo viaggio nella memoria collettiva di Piedimonte Matese.*
