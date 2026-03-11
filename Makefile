@@ -7,7 +7,13 @@ process_photos : ## Process raw_data photos with script/process_photos.sh
 build-site: ## Build the Jekyll site (generates _site/ folder)
 	podman run --rm --name jekyll-lanyon-build -v "$$(pwd):/usr/src/app" -w /usr/src/app jekyll-lanyon:latest bundle exec jekyll build --unpublished --future
 
+build-site-dev: ## Build the Jekyll site with dev config (generates _site/ folder)
+	podman run --rm --name jekyll-lanyon-build -v "$$(pwd):/usr/src/app" -w /usr/src/app jekyll-lanyon:latest bundle exec jekyll build --config _config.yml,_config_dev.yml --unpublished --future
+
 rsync-site: build-site ## Build and rsync the site to remote server
+	rsync -aP --info=,progress2 --update _site brapi-bamberga:/srv/container/cotonificio/data/
+
+rsync-site-dev: build-site-dev ## Build with dev config and rsync to remote server
 	rsync -aP --info=,progress2 --update _site brapi-bamberga:/srv/container/cotonificio/data/
 
 build: ## Build the Docker image
