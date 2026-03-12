@@ -40,7 +40,7 @@ PHOTOS_OUTPUT_DIR = PROJECT_ROOT / "_photos"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 IMAGES_DIR = ASSETS_DIR / "images"
 THUMBS_DIR = ASSETS_DIR / "thumbs"
-DATA_DIR = ASSETS_DIR / "data"
+MAPS_DATA_DIR = ASSETS_DIR / "maps_data"
 VARIANTS_DIR = IMAGES_DIR / "variants"
 VARIANTS_THUMBS_DIR = THUMBS_DIR / "variants"
 
@@ -68,11 +68,13 @@ GEOMETRY_KEYS_TO_REMOVE = {
 REQUIRED_FIELDS = {"title", "date", "location", "labels"}
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s: %(message)s"
-)
-logger = logging.getLogger(__name__)
+def setup_logging(level=logging.INFO):
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s: %(message)s"
+    )
+    logger = logging.getLogger(__name__)
+    return logger
 
 
 # ============================================================================
@@ -120,7 +122,7 @@ def optimize_image(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(output_path, quality=quality, optimize=True)
         
-        logger.info(f"✓ Optimized: {input_path.name} → {output_path}")
+        logger.debug(f"✓ Optimized: {input_path.name} → {output_path}")
         return True
         
     except Exception as e:
@@ -153,7 +155,7 @@ def create_thumbnail(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         img.save(output_path, quality=quality, optimize=True)
         
-        logger.info(f"✓ Thumbnail: {output_path}")
+        logger.debug(f"✓ Thumbnail: {output_path}")
         return True
         
     except Exception as e:
@@ -561,7 +563,7 @@ def process_post(filepath: pathlib.Path) -> Optional[Dict]:
     4. Extract coordinates and generate GeoJSON
     5. Return processed metadata
     """
-    logger.info(f"\nProcessing: {filepath.name}")
+    logger.info(f"Processing: {filepath.name}")
     
     # Step 1: Read and parse markdown file
     try:
@@ -604,47 +606,90 @@ def generate_geojson(all_metadata: List[Dict]) -> bool:
     - photos_fov.geojson (Polygon features)
     """
     try:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        
+        MAPS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
         origins_data = []
         fovs_data = []
-        
+        lov_data = []
+
         for metadata in all_metadata:
+            # Determine filename/slug
+            slug = metadata.get('slug') if metadata.get('slug') else metadata.get('title', '')
+            # Try to get primary image filename
+            filename = ''
+            images = metadata.get('images')
+            if images and isinstance(images, list) and len(images) > 0:
+                primary = next((img for img in images if img.get('is_primary')), images[0])
+                filename = primary.get('file', '')
+            else:
+                filename = metadata.get('primary_image', slug)
+
+            # Points (origin)
             if metadata.get("_origin"):
                 origins_data.append({
                     "title": metadata.get("title", ""),
                     "date": str(metadata.get("date", "")),
                     "labels": ",".join(metadata.get("labels", [])),
+                    "filename": filename,
+                    "text": metadata.get("title", ""),
                     "geometry": metadata["_origin"],
                 })
-            
+            # Polygons (fov)
             if metadata.get("_fov"):
                 fovs_data.append({
                     "title": metadata.get("title", ""),
                     "date": str(metadata.get("date", "")),
+                    "filename": filename,
+                    "text": metadata.get("title", ""),
                     "geometry": metadata["_fov"],
                 })
-        
-        if not origins_data and not fovs_data:
+            # Lines (lov)
+            # Try to extract line_of_sight_geojson from location
+            loc = metadata.get("location")
+            if loc and isinstance(loc, dict):
+                lov_geojson = loc.get("line_of_sight_geojson")
+                if lov_geojson:
+                    try:
+                        geom = json.loads(lov_geojson)
+                        # Convert to shapely geometry
+                        line = LineString(geom["coordinates"])
+                        lov_data.append({
+                            "title": metadata.get("title", ""),
+                            "date": str(metadata.get("date", "")),
+                            "filename": filename,
+                            "text": metadata.get("title", ""),
+                            "geometry": line,
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to parse line_of_sight_geojson for {metadata.get('title','')}: {e}")
+
+        if not origins_data and not fovs_data and not lov_data:
             logger.warning("No valid location data to generate GeoJSON")
             return False
-        
+
         # Write origins GeoJSON (Point features)
         if origins_data:
             origins_gdf = gpd.GeoDataFrame(origins_data, crs="EPSG:4326")
-            origins_path = DATA_DIR / "photos_origin.geojson"
+            origins_path = MAPS_DATA_DIR / "photos_origin.geojson"
             origins_gdf.to_file(origins_path, driver="GeoJSON")
-            logger.info(f"✓ Generated: {origins_path} ({len(origins_gdf)} points)")
-        
+            logger.debug(f"Generated: {origins_path} ({len(origins_gdf)} points)")
+
         # Write FOV GeoJSON (Polygon features)
         if fovs_data:
             fovs_gdf = gpd.GeoDataFrame(fovs_data, crs="EPSG:4326")
-            fovs_path = DATA_DIR / "photos_fov.geojson"
+            fovs_path = MAPS_DATA_DIR / "photos_fov.geojson"
             fovs_gdf.to_file(fovs_path, driver="GeoJSON")
-            logger.info(f"✓ Generated: {fovs_path} ({len(fovs_gdf)} polygons)")
-        
+            logger.debug(f"Generated: {fovs_path} ({len(fovs_gdf)} polygons)")
+
+        # Write LOV GeoJSON (Line features)
+        if lov_data:
+            lov_gdf = gpd.GeoDataFrame(lov_data, crs="EPSG:4326")
+            lov_path = MAPS_DATA_DIR / "photos_lov.geojson"
+            lov_gdf.to_file(lov_path, driver="GeoJSON")
+            logger.debug(f"Generated: {lov_path} ({len(lov_gdf)} lines)")
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to generate GeoJSON: {e}")
         return False
@@ -699,7 +744,7 @@ def write_jekyll_markdown(slug: str, metadata: Dict) -> bool:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
         
-        logger.info(f"✓ Created: {output_path}")
+        logger.debug(f"Created: {output_path}")
         return True
         
     except Exception as e:
@@ -713,48 +758,54 @@ def write_jekyll_markdown(slug: str, metadata: Dict) -> bool:
 
 def main():
     """Main processing pipeline - orchestrates the complete workflow."""
-    logger.info("=" * 70)
+    import argparse
+    parser = argparse.ArgumentParser(description="Process research photos and generate GeoJSON.")
+    parser.add_argument('--log', dest='loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level (default: INFO)')
+    args = parser.parse_args()
+
+    loglevel = getattr(logging, args.loglevel.upper(), logging.INFO)
+    global logger
+    logger = setup_logging(loglevel)
+
     logger.info("Research Photo Processing Pipeline")
-    logger.info("=" * 70)
     logger.info(f"Raw data: {RAW_DATA_DIR}")
     logger.info(f"Output: {PHOTOS_OUTPUT_DIR}")
-    
+
     # Validate raw_data directory
     if not RAW_DATA_DIR.exists():
         logger.error(f"raw_data directory not found: {RAW_DATA_DIR}")
         return False
-    
+
     # Find all markdown files to process
     md_files = list(RAW_DATA_DIR.glob("*.md"))
     if not md_files:
         logger.warning("No .md files found in raw_data/")
         return False
-    
-    logger.info(f"\nFound {len(md_files)} .md files to process\n")
-    
+
+    logger.info(f"Found {len(md_files)} .md files to process")
+
     # Process each markdown file
     processed_metadata = []
     success_count = 0
-    
+
     for filepath in sorted(md_files):
         metadata = process_post(filepath)
         if metadata:
             processed_metadata.append(metadata)
-            
             # Write processed file to Jekyll format
             slug = slug_from_path(filepath)
             if write_jekyll_markdown(slug, metadata):
                 success_count += 1
-    
+            if loglevel == logging.DEBUG:
+                logger.debug(f"Processed file: {filepath.name}")
+
     # Aggregate all geometries into GeoJSON files
     if processed_metadata:
         generate_geojson(processed_metadata)
-    
+
     # Summary
-    logger.info("\n" + "=" * 70)
     logger.info(f"✓ Processing complete: {success_count}/{len(md_files)} files processed")
-    logger.info("=" * 70)
-    
+
     return success_count > 0
 
 

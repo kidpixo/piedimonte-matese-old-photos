@@ -119,10 +119,66 @@ const LAYER_CONFIG = {
         slider: false,
         visible: true,
         layerType: "geojson",
-        showInControl: true
-    }
+        showInControl: true,
+        style: {
+            pointToLayer: function(feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 8,
+                    fillColor: "#e74c3c", // Red fill
+                    color: "#c0392b",     // Dark red border
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                });
+            }
+        }
+    },
+    FOTO_FOV: {
+        id: "foto_fov",
+        type: "overlay",
+        name: "foto_fov",
+        url: BASE_URL + 'photos_fov.geojson',
+        opacity: 0.8,
+        slider: true,
+        visible: true,
+        layerType: "geojson",
+        showInControl: true,
+        style: {
+            style: {
+                fillColor: "hsl(190, 80%, 50%)", // light blue fill
+                fillOpacity: 0.5,
+                stroke: false,        // No border
+                weight: 0
+            }
+        }
+    },
+    FOTO_LINE: {
+        id: "foto_line",
+        type: "overlay",
+        name: "foto_line",
+        url: BASE_URL + 'photos_lov.geojson',
+        slider: true,
+        visible: true,
+        layerType: "geojson",
+        showInControl: true,
+        style: {
+            style: {
+                color: "#e74c3c", // Red line
+                weight: 4,
+                opacity: 1
+            },            
+            // Usage in onEachFeature:
+            onEachFeature: function(feature, layer) {
+                if (layer instanceof L.Polyline) {
+                    layer.on("add", function() {
+                        requestAnimationFrame(() => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
+                    });
+                    layers.map.on("zoomend moveend", () => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
+                }
+                }
+            }
+    },
     // Add more as needed, or comment out to disable
-    ,
     PHOTO_ORIGIN: {
         id: "photo_origin",
         type: "overlay",
@@ -152,13 +208,13 @@ const LAYER_CONFIG = {
         showInControl: true,
         style: {
             style: {
-                color: "#2980b9",
-                weight: 2,
-                fillColor: "#3498db",
-                fillOpacity: 0.3
+                fillColor: "hsl(190, 80%, 50%)", // light blue fill
+                fillOpacity: 0.5,
+                stroke: false,        // No border
+                weight: 0
             }
         }
-    },
+     },
     PHOTO_LINE: {
         id: "photo_line",
         type: "overlay",
@@ -168,13 +224,20 @@ const LAYER_CONFIG = {
         showInControl: true,
         style: {
             style: {
-                color: "#27ae60",
-                weight: 3,
-                dashArray: "6,6",
-                opacity: 0.8
-            }
-        }
-    }
+                color: "#e74c3c", // Red line
+                weight: 4,
+                opacity: 1
+            },            
+            // Usage in onEachFeature:
+            onEachFeature: function(feature, layer) {
+                if (layer instanceof L.Polyline) {
+                    layer.on("add", function() {
+                        requestAnimationFrame(() => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
+                    });
+                    layers.map.on("zoomend moveend", () => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
+                }
+                }
+            }    }
 };
 
 // Global object to store all map layers for easy access
@@ -374,9 +437,10 @@ function setupOpacityControls() {
             if (el && layer) {
                 el.addEventListener('input', debounce((e) => {
                     const opacity = e.target.value;
-                    if (cfg.id === 'fov') {
-                        layer.setStyle(new_style(opacity));
-                    } else {
+                    // Use method detection for opacity change
+                    if (typeof layer.setStyle === "function") {
+                        layer.setStyle({ fillOpacity: opacity, opacity: opacity });
+                    } else if (typeof layer.setOpacity === "function") {
                         layer.setOpacity(opacity);
                     }
                 }, 50));
@@ -405,27 +469,41 @@ function setupCustomControls() {
     control.addTo(layers.map);
 }
 
-// Add photo origin points as a GeoJSON layer
+// Add photo origin points as a GeoJSON layer : use layer style config if present, and bind popups with photo thumbnails
 async function addPhotoLayers() {
     const promises = [];
     for (const key in LAYER_CONFIG) {
         const cfg = LAYER_CONFIG[key];
         if (!cfg.visible || cfg.layerType !== 'geojson') continue;
+
         const promise = new Promise((resolve, reject) => {
             getJSON(cfg.url, (geojson) => {
                 try {
-                    layers[cfg.id] = L.geoJSON(geojson, {
-                        onEachFeature: (feature, layer) => {
-                            const text = feature.properties.text.replace(/['"]+/g, '');
-                            const filename = feature.properties.filename;
+                    const geoJsonOptions = cfg.style ? { ...cfg.style } : {};
+                    const configOnEachFeature = geoJsonOptions.onEachFeature;
+
+                    geoJsonOptions.onEachFeature = (feature, layer) => {
+                        // keep layer-specific behavior (e.g. arrowheads)
+                        if (typeof configOnEachFeature === "function") {
+                            configOnEachFeature(feature, layer);
+                        }
+
+                        // add popup only when properties exist
+                        const props = feature?.properties || {};
+                        if (props.text && props.filename) {
+                            const text = String(props.text).replace(/['"]+/g, "");
+                            const filename = String(props.filename);
                             const popupContent = `<div><h2>${text}</h2><a href="${BASE_URL}photos/${filename}" target="_blank" rel="noopener noreferrer">original` +
-                                (filename.includes('.webm')
+                                (filename.includes(".webm")
                                     ? `<video controls id="markers_popup_photos" src="${BASE_URL}photos/thumbnail_${filename}" alt="${filename}"></video>`
                                     : `<img id="markers_popup_photos" src="${BASE_URL}photos/thumbnail_${filename}" alt="${filename}">`) +
-                                '</a></div>';
-                            layer.bindPopup(popupContent, {maxWidth: "auto"});
+                                "</a></div>";
+                            layer.bindPopup(popupContent, { maxWidth: "auto" });
                         }
-                    }).addTo(layers.map);
+                    };
+
+                    layers[cfg.id] = L.geoJSON(geojson, geoJsonOptions).addTo(layers.map);
+                    layers[cfg.id].options["layer_id"] = cfg.id;
                     resolve();
                 } catch (error) {
                     console.error(`Error adding photo layer for ${cfg.id}:`, error);
@@ -433,12 +511,14 @@ async function addPhotoLayers() {
                 }
             });
         });
+
         promises.push(promise);
     }
+
     return Promise.all(promises);
 }
 
-// --- Timeline Slider ---
+/// --- Timeline Slider ---
 function createTimelineSlider() {
     // Only use overlays that are currently visible and have a year
     const years = Object.values(LAYER_CONFIG)
@@ -834,6 +914,54 @@ async function addIndividualGeoJsonLayers() {
             console.error('Error adding photo line layer:', err);
         }
     }
+}
+
+// Utility: Add arrowhead to a Leaflet polyline
+function addArrowhead(layer, options = {}) {
+    const color = options.color || "#e74c3c";
+    const size = options.size || 15;
+    const map = layer._map;
+    if (!map) return;
+
+    const latlngsRaw = layer.getLatLngs();
+    const latlngs = Array.isArray(latlngsRaw[0]) ? latlngsRaw[0] : latlngsRaw;
+    if (!latlngs || latlngs.length < 2) return;
+
+    const prev = latlngs[latlngs.length - 2];
+    const last = latlngs[latlngs.length - 1];
+
+    const p1 = map.latLngToLayerPoint(prev);
+    const p2 = map.latLngToLayerPoint(last);
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+    const arrowLength = size;
+    const arrowWidth = size / 2;
+
+    const left = L.point(
+        p2.x - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle),
+        p2.y - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle)
+    );
+    const right = L.point(
+        p2.x - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle),
+        p2.y - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle)
+    );
+
+    const path = layer._path;
+    const svg = path?.ownerSVGElement;
+    if (!svg) {
+        console.warn("Arrowhead not drawn: SVG path not ready.");
+        return;
+    }
+
+    svg.querySelectorAll(`[data-arrowhead="${layer._leaflet_id}"]`).forEach((el) => el.remove());
+
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    arrow.setAttribute("points", `${p2.x},${p2.y} ${left.x},${left.y} ${right.x},${right.y}`);
+    arrow.setAttribute("fill", color);
+    arrow.setAttribute("stroke", color);
+    arrow.setAttribute("stroke-width", "1");
+    arrow.setAttribute("data-arrowhead", String(layer._leaflet_id));
+    svg.appendChild(arrow);
 }
 
 // Start everything: initialize map and add raster layers (async)
