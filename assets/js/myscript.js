@@ -17,7 +17,10 @@ const LAYER_CONFIG = {
         visible: true,
         layerType: "tile",
         showInControl: false,
-        maxZoom: 20
+        extraOptions: { 
+            maxNativeZoom: 19, 
+            maxZoom: 23 
+        }
     },
     // BING: {
     //     id: "bing",
@@ -40,8 +43,11 @@ const LAYER_CONFIG = {
         visible: true,
         layerType: "tile",
         showInControl: true,
-        maxZoom: 20
-    },
+        extraOptions: { 
+            maxNativeZoom: 20, 
+            maxZoom: 23 
+        }
+        },
     RASTER_1884: {
         id: "1884",
         type: "overlay",
@@ -301,7 +307,7 @@ async function initMap() {
 function createMap() {
     layers.map = L.map("map", {
         center: window._mapCenterOverride || [centerLat || 41.35512154669242, centerLng || 14.372210047410501],
-        zoom: window._mapZoomOverride || zoomLevel || 17,        maxZoom: 20, // or another value depending on your data
+        zoom: window._mapZoomOverride || zoomLevel || 17,        maxZoom: 23,
         zoomControl: true,
         preferCanvas: false,
     });
@@ -495,8 +501,8 @@ async function addPhotoLayers() {
                             const filename = String(props.filename);
                             const popupContent = `<div><h2>${text}</h2><a href="${BASE_URL}photos/${filename}" target="_blank" rel="noopener noreferrer">original` +
                                 (filename.includes(".webm")
-                                    ? `<video controls id="markers_popup_photos" src="${BASE_URL}photos/thumbnail_${filename}" alt="${filename}"></video>`
-                                    : `<img id="markers_popup_photos" src="${BASE_URL}photos/thumbnail_${filename}" alt="${filename}">`) +
+                                    ? `<video controls id="markers_popup_photos" src="${BASE_URL}assets/thumbs/${filename}" alt="${filename}"></video>`
+                                    : `<img id="markers_popup_photos" src="${BASE_URL}assets/thumbs/${filename}" alt="${filename}">`) +
                                 "</a></div>";
                             layer.bindPopup(popupContent, { maxWidth: "auto" });
                         }
@@ -528,300 +534,326 @@ function createTimelineSlider() {
         .sort((a, b) => a - b);
     if (years.length < 2) return; // Need at least 2 visible layers with year
 
-    // Create slider container
-    const sliderContainer = document.createElement('div');
-    sliderContainer.id = 'timeline-slider-container';
-    sliderContainer.className = 'w-100 px-4 pb-2 '; //leaflet-control leaflet-bar'; // Leaflet style for main container
-    sliderContainer.style.bottom = '60px'; // Move slider higher above credits (was '0')
-    sliderContainer.style.left = '0';
-    sliderContainer.style.zIndex = '1000';
-    sliderContainer.style.pointerEvents = 'auto';
-    sliderContainer.style.background = 'none';
-    sliderContainer.style.textAlign = 'center';
+    if (layers.timelineControl) {
+        layers.map.removeControl(layers.timelineControl);
+        layers.timelineControl = null;
+    }
 
-    // Create year labels
-    const labelRow = document.createElement('div');
-    labelRow.className = 'd-flex justify-content-between mx-auto';
-    labelRow.style.position = 'relative';
-    labelRow.style.zIndex = '1001';
-    labelRow.style.marginBottom = '4px';
-    labelRow.style.width = '100%'; // Match slider width
-    labelRow.style.maxWidth = '100%';
-    years.forEach((year, i) => {
-        const lbl = document.createElement('span');
-        lbl.innerText = year;
-        lbl.style.fontSize = '1.25em';
-        lbl.style.color = '#222';
-        lbl.style.fontWeight = 'bold';
-        lbl.style.textShadow = '0 0 8px #fff, 0 0 2px #fff, 0 0 1px #fff'; // White outer glow for readability
-        lbl.style.padding = '2px 6px';
-        lbl.style.borderRadius = '4px';
-    labelRow.appendChild(lbl);
-    });
+    const TimelineControl = L.Control.extend({
+        options: {
+            position: 'bottomleft'
+        },
 
-    sliderContainer.appendChild(labelRow);
+        onAdd: function(map) {
+            // Main control wrapper
+            const collapsibleControl = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
+            collapsibleControl.style.pointerEvents = 'auto';
+            collapsibleControl.style.width = '100%';
+            collapsibleControl.style.border = '1px solid #bbb';
+            collapsibleControl.style.borderRadius = '8px';
+            collapsibleControl.style.background = 'rgba(255,255,255,0.3)';
+            collapsibleControl.style.display = 'flex';
+            collapsibleControl.style.flexDirection = 'row';
+            collapsibleControl.style.alignItems = 'stretch';
+            collapsibleControl.style.textAlign = 'center';
+            collapsibleControl.style.marginBottom = '12px'; // more gap from map bottom
 
-    // Create slider input
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.id = 'timeline-slider';
-    slider.className = 'form-range'; // Bootstrap style
-    slider.min = 0;
-    slider.max = years.length - 1;
-    slider.step = '0.01'; // Smooth fade
-    slider.value = 0;
-    slider.style.margin = '0 auto';
-    slider.style.width = '100%'; // Match labelRow width
-    sliderContainer.appendChild(slider);
-
-    // Create play button
-    const playBtn = document.createElement('button');
-    playBtn.id = 'timeline-play-btn';
-    playBtn.className = 'leaflet-bar-part leaflet-control'; // Leaflet style for button
-    playBtn.innerHTML = '&#9654;'; // Unicode play symbol ▶
-    playBtn.title = 'Play timeline';
-    playBtn.style.fontSize = '1.5em';
-    playBtn.style.verticalAlign = 'middle';
-    playBtn.style.cursor = 'pointer';
-    playBtn.style.marginRight = '16px';
-
-    // Single/Loop switch
-    const singleLoopLabel = document.createElement('label');
-    singleLoopLabel.className = 'leaflet-control form-check form-switch mb-2';
-    singleLoopLabel.style.display = 'flex';
-    singleLoopLabel.style.alignItems = 'center';
-    singleLoopLabel.style.fontSize = '1.25em';
-    singleLoopLabel.style.color = '#222';
-    singleLoopLabel.style.fontWeight = 'bold';
-    singleLoopLabel.style.textShadow = '0 0 8px #fff, 0 0 2px #fff, 0 0 1px #fff';
-    singleLoopLabel.style.marginRight = '16px';
-    singleLoopLabel.innerHTML = `<input class="form-check-input" type="checkbox" id="timeline-switch-loop" checked> loop  `;
-    
-    // Slow/Fast switch
-    const slowFastLabel = document.createElement('label');
-    slowFastLabel.className = ' leaflet-control form-check form-switch';
-    slowFastLabel.style.display = 'flex';
-    slowFastLabel.style.alignItems = 'center';
-    slowFastLabel.style.fontSize = '1.25em';
-    slowFastLabel.style.color = '#222';
-    slowFastLabel.style.fontWeight = 'bold';
-    slowFastLabel.style.textShadow = '0 0 8px #fff, 0 0 2px #fff, 0 0 1px #fff';
-    slowFastLabel.innerHTML = `<input class="form-check-input" type="checkbox" id="timeline-switch-speed"> fast `;
-
-    // Reverse switch
-    const reverseLabel = document.createElement('label');
-    reverseLabel.className = 'leaflet-control form-check form-switch';
-    reverseLabel.style.display = 'flex';
-    reverseLabel.style.alignItems = 'center';
-    reverseLabel.style.fontSize = '1.25em';
-    reverseLabel.style.color = '#222';
-    reverseLabel.style.fontWeight = 'bold';
-    reverseLabel.style.textShadow = '0 0 8px #fff, 0 0 2px #fff, 0 0 1px #fff';
-    reverseLabel.innerHTML = `<input class="form-check-input" type="checkbox" id="timeline-switch-reverse"> rev`;
-
-    // Controls row: play button and switches in a row below the slider
-    const controlsRow = document.createElement('div');
-    controlsRow.style.display = 'flex';
-    controlsRow.style.flexDirection = 'row';
-    controlsRow.style.justifyContent = 'center';
-    controlsRow.style.alignItems = 'center';
-    controlsRow.style.width = '60%';
-    controlsRow.style.margin = '8px auto 0 auto';
-
-    controlsRow.appendChild(playBtn);
-    controlsRow.appendChild(singleLoopLabel);
-    controlsRow.appendChild(slowFastLabel);
-    controlsRow.appendChild(reverseLabel);
-    sliderContainer.appendChild(controlsRow);
-    document.body.appendChild(sliderContainer);
-
-    // --- Collapsible Leaflet Control Wrapper ---
-    const collapsibleControl = document.createElement('div');
-    collapsibleControl.className = 'leaflet-control leaflet-bar';
-    collapsibleControl.style.position = 'absolute';
-    collapsibleControl.style.left = '50%';
-    // collapsibleControl.style.transform = 'translateX(-50%)';
-    collapsibleControl.style.bottom = '60px';
-    collapsibleControl.style.textAlign = 'center';
-    collapsibleControl.style.pointerEvents = 'auto';
-    collapsibleControl.style.width = '95vw'; // 95% of viewport width
-    collapsibleControl.style.maxWidth = '';
-    collapsibleControl.style.minWidth = '';
-    collapsibleControl.style.border = '1px solid #bbb';
-    collapsibleControl.style.borderRadius = '8px';
-    collapsibleControl.style.background = 'rgba(255,255,255,0.3)';
-    collapsibleControl.style.display = 'flex';
-    collapsibleControl.style.flexDirection = 'row';
-    collapsibleControl.style.alignItems = 'stretch';
-    // Place the control at the bottom center
-    collapsibleControl.style.transform = 'translateX(-50%)';
-    collapsibleControl.style.zIndex = '1003';
-
- 
-    sliderContainer.style.width = '100%';
-    sliderContainer.style.display = 'flex';
-    sliderContainer.style.flexDirection = 'column';
-    sliderContainer.style.justifyContent = 'center';
-    sliderContainer.style.alignItems = 'center';
-    sliderContainer.style.background = 'none';
-    sliderContainer.style.borderRadius = '8px';
-
-    // Toggle button (collapse)
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'leaflet-bar-part leaflet-control'; // Leaflet style for button
-    toggleBtn.style.border = '';
-    toggleBtn.style.background = '';
-    toggleBtn.style.fontWeight = 'bold';
-    // toggleBtn.style.fontSize = '1.5em';
-    toggleBtn.style.cursor = 'pointer';
-    // toggleBtn.style.padding = '8px 16px';
-    toggleBtn.style.height = '100%';
-    toggleBtn.style.display = 'flex';
-    toggleBtn.style.alignItems = 'center';
-    toggleBtn.style.justifyContent = 'center';
-    toggleBtn.innerHTML = '&#8942;'; // ⋮ vertical dots for expanded
-
-    // Place button to left
-    collapsibleControl.appendChild(toggleBtn);
-    collapsibleControl.appendChild(sliderContainer);
-
-    // Hide sliderContainer initially
-    sliderContainer.style.display = '';
-
-    // Toggle logic
-    let collapsed = false;
-    toggleBtn.addEventListener('click', function() {
-        collapsed = !collapsed;
-        if (collapsed) {
-            sliderContainer.style.display = 'none';
-            collapsibleControl.style.width = 'auto';
-            collapsibleControl.style.left = '20px'; // Collapse to left side
-            collapsibleControl.style.right = '';
-            collapsibleControl.style.transform = '';
-            collapsibleControl.style.justifyContent = 'flex-start';
-        } else {
+            // Slider content container
+            const sliderContainer = L.DomUtil.create('div', 'w-100 px-4 pb-2', collapsibleControl);
+            sliderContainer.id = 'timeline-slider-container';
             sliderContainer.style.display = 'flex';
-            collapsibleControl.style.width = '95vw';
-            collapsibleControl.style.left = '50%';
-            collapsibleControl.style.right = '';
-            collapsibleControl.style.transform = 'translateX(-50%)';
-            collapsibleControl.style.justifyContent = '';
-        }
-        toggleBtn.innerHTML = collapsed ? '&#9776;' : '&#8942;'; // ☰ for collapsed, ⋮ for expanded
-    });
+            sliderContainer.style.flexDirection = 'column';
+            sliderContainer.style.justifyContent = 'center';
+            sliderContainer.style.alignItems = 'center';
+            sliderContainer.style.background = 'none';
+            sliderContainer.style.borderRadius = '8px';
 
-   document.body.appendChild(collapsibleControl);
+            // Create year labels
+            const labelRow = L.DomUtil.create('div', 'px-3 pb-1 d-flex justify-content-between mx-auto', sliderContainer);
+            labelRow.style.position = 'relative';
+            labelRow.style.marginBottom = '4px';
+            labelRow.style.width = '100%';
+            labelRow.style.maxWidth = '100%';
+            labelRow.style.marginBottom = '2px';
 
-    // Handler for slider movement (timeline slider)
-    slider.addEventListener('input', debounce(function(e) {
-        const val = parseFloat(e.target.value);
-        // Find nearest years
-        const i = Math.floor(val);
-        const frac = val - i;
-        years.forEach((year, idx) => {
-            // Find layer for this year
-            const layerKey = Object.keys(LAYER_CONFIG).find(k => LAYER_CONFIG[k].year && parseInt(LAYER_CONFIG[k].year) === year);
-            if (!layerKey) return;
-            const layerObj = layers[LAYER_CONFIG[layerKey].id];
-            if (!layerObj) return;
-            let opacity = 0;
-            if (idx === i) {
-                opacity = 1 - frac;
-            } else if (idx === i + 1) {
-                opacity = frac;
+            years.forEach((year) => {
+                const lbl = L.DomUtil.create('span', '', labelRow);
+                lbl.innerText = year;
+                lbl.style.fontSize = '1.25em';
+                lbl.style.color = '#222';
+                lbl.style.fontWeight = 'bold';
+                lbl.style.textShadow = '0 0 8px #fff, 0 0 2px #fff, 0 0 1px #fff';
+                lbl.style.padding = '2px 6px';
+                lbl.style.borderRadius = '4px';
+                lbl.style.padding = '1px 4px';
+            });
+
+            // Create slider input
+            const slider = L.DomUtil.create('input', 'form-range', sliderContainer);
+            slider.type = 'range';
+            slider.id = 'timeline-slider';
+            slider.min = 0;
+            slider.max = years.length - 1;
+            slider.step = '0.01';
+            slider.value = 0;
+            slider.style.margin = '0 auto';
+            slider.style.width = '100%';
+
+            // Create timeline controls as native Leaflet-style bar buttons
+            const transportBar = L.DomUtil.create('div', 'leaflet-bar');
+            transportBar.style.display = 'flex';
+
+            const playBtn = L.DomUtil.create('a', 'leaflet-bar-part', transportBar);
+            playBtn.id = 'timeline-play-btn';
+            playBtn.href = '#';
+            playBtn.setAttribute('role', 'button');
+            playBtn.setAttribute('aria-label', 'Play timeline');
+            playBtn.innerHTML = '&#9654;';
+            playBtn.title = 'Play timeline';
+            playBtn.style.width = '32px';
+            playBtn.style.textAlign = 'center';
+
+            const loopBtn = L.DomUtil.create('a', 'leaflet-bar-part', transportBar);
+            loopBtn.href = '#';
+            loopBtn.setAttribute('role', 'button');
+            loopBtn.setAttribute('aria-label', 'Toggle loop playback');
+            loopBtn.title = 'Loop playback';
+            loopBtn.textContent = '∞';
+            loopBtn.style.width = '32px';
+            loopBtn.style.textAlign = 'center';
+
+            const speedBtn = L.DomUtil.create('a', 'leaflet-bar-part', transportBar);
+            speedBtn.href = '#';
+            speedBtn.setAttribute('role', 'button');
+            speedBtn.setAttribute('aria-label', 'Toggle playback speed');
+            speedBtn.title = 'Fast playback';
+            speedBtn.textContent = '1x';
+            speedBtn.style.minWidth = '36px';
+            speedBtn.style.textAlign = 'center';
+
+            const reverseBtn = L.DomUtil.create('a', 'leaflet-bar-part', transportBar);
+            reverseBtn.href = '#';
+            reverseBtn.setAttribute('role', 'button');
+            reverseBtn.setAttribute('aria-label', 'Toggle reverse playback');
+            reverseBtn.title = 'Reverse playback';
+            reverseBtn.textContent = '⇄';
+            reverseBtn.style.width = '32px';
+            reverseBtn.style.textAlign = 'center';
+
+            // Controls row
+            const controlsRow = L.DomUtil.create('div', '', sliderContainer);
+            controlsRow.style.display = 'flex';
+            controlsRow.style.flexDirection = 'row';
+            controlsRow.style.justifyContent = 'center';
+            controlsRow.style.alignItems = 'center';
+            controlsRow.style.width = '60%';
+            controlsRow.style.margin = '8px auto 0 auto';
+            controlsRow.appendChild(transportBar);
+
+            // Toggle button (collapse)
+            const toggleBtn = L.DomUtil.create('a', 'leaflet-bar-part', collapsibleControl);
+            toggleBtn.href = '#';
+            toggleBtn.setAttribute('role', 'button');
+            toggleBtn.setAttribute('aria-label', 'Toggle timeline controls');
+            toggleBtn.style.fontWeight = 'bold';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.height = '25%';
+            toggleBtn.style.display = 'flex';
+            toggleBtn.style.alignItems = 'center';
+            toggleBtn.style.justifyContent = 'center';
+            toggleBtn.innerHTML = '&#8942;';
+            collapsibleControl.insertBefore(toggleBtn, sliderContainer);
+
+            function applyTimelineOpacity(val) {
+                const i = Math.floor(val);
+                const frac = val - i;
+                years.forEach((year, idx) => {
+                    const layerKey = Object.keys(LAYER_CONFIG).find(k => LAYER_CONFIG[k].year && parseInt(LAYER_CONFIG[k].year) === year);
+                    if (!layerKey) return;
+                    const layerObj = layers[LAYER_CONFIG[layerKey].id];
+                    if (!layerObj) return;
+                    let opacity = 0;
+                    if (idx === i) {
+                        opacity = 1 - frac;
+                    } else if (idx === i + 1) {
+                        opacity = frac;
+                    }
+                    layerObj.setOpacity(opacity);
+                    LAYER_CONFIG[layerKey].opacity = opacity;
+                    const sliderEl = document.querySelector(`#opacity-slider-${LAYER_CONFIG[layerKey].id}`);
+                    if (sliderEl) sliderEl.value = opacity;
+                    const checkbox = document.querySelector(`input.leaflet-control-layers-selector[type='checkbox'][data-layerid='${LAYER_CONFIG[layerKey].id}']`);
+                    if (checkbox && !checkbox.checked) checkbox.checked = true;
+                });
             }
-            // Set layer opacity
-            layerObj.setOpacity(opacity);
-            LAYER_CONFIG[layerKey].opacity = opacity;
-            // Sync opacity slider in control
-            const sliderEl = document.querySelector(`#opacity-slider-${LAYER_CONFIG[layerKey].id}`);
-            if (sliderEl) sliderEl.value = opacity;
-            // Ensure layer is visible in control
-            const checkbox = document.querySelector(`input.leaflet-control-layers-selector[type='checkbox'][data-layerid='${LAYER_CONFIG[layerKey].id}']`);
-            if (checkbox && !checkbox.checked) checkbox.checked = true;
-        });
-    }, 50));
 
-    // --- PLAY LOGIC ---
-    let playing = false;
-    let playInterval = null;
-    let currentStep = 0;
-    const stepsPerLabel = 20; // smoothness between labels
-    const totalSteps = (years.length - 1) * stepsPerLabel;
-    const baseStepTime = 3000 / stepsPerLabel; // 1s per label
-    const fastStepTime = baseStepTime / 4; // 4x speed
+            // Timeline slider movement
+            slider.addEventListener('input', function(e) {
+                const val = parseFloat(e.target.value);
+                applyTimelineOpacity(val);
+            });
 
-    function getDirection() {
-        return reverseLabel.querySelector('input').checked ? -1 : 1;
-    }
-    function getLoop() {
-        return singleLoopLabel.querySelector('input').checked;
-    }
-    function getSpeed() {
-        return slowFastLabel.querySelector('input').checked ? fastStepTime : baseStepTime;
-    }
-    function setPlaying(state) {
-        playing = state;
-        playBtn.innerHTML = state ? '&#9632;' : '&#9654;'; // ■ for stop, ▶ for play
-    }
-    function playTimeline() {
-        console.log('playTimeline called'); // Debug log
-        if (playing) return;
-        setPlaying(true);
-        let direction = getDirection();
-        let loop = getLoop();
-        let speed = getSpeed();
-        let min = 0, max = totalSteps;
-        let val = Math.round(parseFloat(slider.value) * stepsPerLabel);
-        currentStep = val;
-        function step() {
-            // console.log('step called, playing:', playing); // Debug log
-            direction = getDirection();
-            loop = getLoop();
-            speed = getSpeed();
-            // Clamp currentStep before increment
-            if (currentStep < min) currentStep = min;
-            if (currentStep > max) currentStep = max;
-            // console.log('currentStep:', currentStep, 'min:', min, 'max:', max); // Debug log
-            slider.value = (currentStep / stepsPerLabel).toFixed(2);
-            // console.log('playTimeline step, slider.value:', slider.value); // Debug log
-            slider.dispatchEvent(new Event('input'));
-            currentStep += direction;
-            // Now check bounds after increment
-            if (currentStep < min || currentStep > max) {
-                // console.log('Out of bounds, stopping or looping'); // Debug log
-                if (loop) {
-                    currentStep = direction === -1 ? max : min;
-                } else {
-                    stopTimeline();
-                    return;
+            // Play logic
+            let playing = false;
+            let playInterval = null;
+            let currentStep = 0;
+            let loopEnabled = true;
+            let fastEnabled = false;
+            let reverseEnabled = false;
+            const stepsPerLabel = 20;
+            const totalSteps = (years.length - 1) * stepsPerLabel;
+            const baseStepTime = 3000 / stepsPerLabel;
+            const fastStepTime = baseStepTime / 4;
+
+            function setModeButtonState(button, enabled) {
+                button.style.backgroundColor = enabled ? '#e9f2ff' : '';
+                button.style.fontWeight = enabled ? 'bold' : 'normal';
+            }
+
+            setModeButtonState(loopBtn, loopEnabled);
+            setModeButtonState(speedBtn, fastEnabled);
+            setModeButtonState(reverseBtn, reverseEnabled);
+
+            function getDirection() {
+                return reverseEnabled ? -1 : 1;
+            }
+            function getLoop() {
+                return loopEnabled;
+            }
+            function getSpeed() {
+                return fastEnabled ? fastStepTime : baseStepTime;
+            }
+            function setPlaying(state) {
+                playing = state;
+                playBtn.innerHTML = state ? '&#9632;' : '&#9654;';
+                playBtn.title = state ? 'Stop timeline' : 'Play timeline';
+            }
+            function stopTimeline() {
+                setPlaying(false);
+                if (playInterval) clearTimeout(playInterval);
+                playInterval = null;
+            }
+            function playTimeline() {
+                if (playing) return;
+                setPlaying(true);
+                let direction = getDirection();
+                let loop = getLoop();
+                let speed = getSpeed();
+                const min = 0;
+                const max = totalSteps;
+                currentStep = Math.round(parseFloat(slider.value) * stepsPerLabel);
+
+                function step() {
+                    direction = getDirection();
+                    loop = getLoop();
+                    speed = getSpeed();
+
+                    if (currentStep < min) currentStep = min;
+                    if (currentStep > max) currentStep = max;
+
+                    const sliderValue = (currentStep / stepsPerLabel).toFixed(2);
+                    slider.value = sliderValue;
+                    applyTimelineOpacity(parseFloat(sliderValue));
+                    currentStep += direction;
+
+                    if (currentStep < min || currentStep > max) {
+                        if (loop) {
+                            currentStep = direction === -1 ? max : min;
+                        } else {
+                            stopTimeline();
+                            return;
+                        }
+                    }
+                    playInterval = setTimeout(step, speed);
                 }
+
+                playInterval = setTimeout(step, speed);
             }
-            playInterval = setTimeout(step, speed);
-        }
-        playInterval = setTimeout(step, speed);
-    }
-    function stopTimeline() {
-        setPlaying(false);
-        if (playInterval) clearTimeout(playInterval);
-        playInterval = null;
-    }
-    playBtn.addEventListener('click', function() {
-        if (playing) {
-            stopTimeline();
-        } else {
-            playTimeline();
+
+            L.DomEvent.on(playBtn, 'click', function(e) {
+                L.DomEvent.preventDefault(e);
+                if (playing) {
+                    stopTimeline();
+                } else {
+                    playTimeline();
+                }
+            });
+
+            [
+                {
+                    button: loopBtn,
+                    toggle: () => {
+                        loopEnabled = !loopEnabled;
+                        setModeButtonState(loopBtn, loopEnabled);
+                    }
+                },
+                {
+                    button: speedBtn,
+                    toggle: () => {
+                        fastEnabled = !fastEnabled;
+                        speedBtn.textContent = fastEnabled ? '2x' : '1x';
+                        setModeButtonState(speedBtn, fastEnabled);
+                    }
+                },
+                {
+                    button: reverseBtn,
+                    toggle: () => {
+                        reverseEnabled = !reverseEnabled;
+                        setModeButtonState(reverseBtn, reverseEnabled);
+                    }
+                }
+            ].forEach(ctrl => {
+                L.DomEvent.on(ctrl.button, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    ctrl.toggle();
+                    if (playing) {
+                        stopTimeline();
+                        playTimeline();
+                    }
+                });
+            });
+
+            // Toggle collapse/expand state
+            let collapsed = false;
+            L.DomEvent.on(toggleBtn, 'click', function(e) {
+                L.DomEvent.preventDefault(e);
+                collapsed = !collapsed;
+                if (collapsed) {
+                    sliderContainer.style.display = 'none';
+                    collapsibleControl.style.width = 'auto';
+                    collapsibleControl.style.justifyContent = 'flex-start';
+                } else {
+                    sliderContainer.style.display = 'flex';
+                    collapsibleControl.style.width = '100%';
+                    collapsibleControl.style.justifyContent = '';
+                }
+                toggleBtn.innerHTML = collapsed ? '&#9776;' : '&#8942;';
+            });
+
+            // Keep map interactions isolated from control interactions
+            L.DomEvent.disableClickPropagation(collapsibleControl);
+            L.DomEvent.disableScrollPropagation(collapsibleControl);
+
+            this._stopTimeline = stopTimeline;
+            return collapsibleControl;
+        },
+
+        onRemove: function() {
+            if (typeof this._stopTimeline === 'function') {
+                this._stopTimeline();
+            }
         }
     });
-    // If any switch changes, update speed/direction immediately
-    [singleLoopLabel, slowFastLabel, reverseLabel].forEach(label => {
-        label.querySelector('input').addEventListener('change', () => {
-            if (playing) {
-                stopTimeline();
-                playTimeline();
-            }
-        });
-    });
+
+    layers.timelineControl = new TimelineControl();
+    layers.timelineControl.addTo(layers.map);
+
+    const bottomLeftCorner = layers.map._controlCorners && layers.map._controlCorners.bottomleft;
+    if (bottomLeftCorner) {
+        bottomLeftCorner.style.width = '100%';
+        bottomLeftCorner.style.display = 'flex';
+        bottomLeftCorner.style.justifyContent = 'center';
+    }
 }
 
 // Patch: add data-layerid to checkboxes after layer control is created

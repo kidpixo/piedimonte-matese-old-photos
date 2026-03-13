@@ -18,7 +18,6 @@ images:
 map:
   zoom: 20
   map_height: 600px
-  map_width: 800px
 date: 1945-01-01
 original_url: https://www.facebook.com/photo?fbid=2182583548421092
 labels:

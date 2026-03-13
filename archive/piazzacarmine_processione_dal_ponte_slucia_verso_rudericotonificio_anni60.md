@@ -20,14 +20,11 @@ images:
     type: "restoration"
     note: "restored version"
     alt: "Piazza Carmine,processione dal Ponte S.Lucia verso ruderi Cotonificio,anni 60, versione restaurata"
-
-date: 1960-01-01
+date: 1958-01-01
 map:
     zoom: 18
     activelayers : ['esri','1884']
     map_height: "500px"
-    map_width: "800px"
-date: 1960-01-01
 original_url: https://www.facebook.com/photo/?fbid=10204223236557502
 labels:
     - "piazza carmine"

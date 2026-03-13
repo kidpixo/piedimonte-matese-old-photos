@@ -107,7 +107,7 @@ layout: default
   {{ content }}
   {% if map_enabled %}
     <div class="page">
-      <div class="folium-map" id="map" style="width: {{ page.map.map_width | default: "400px" }}; height: {{ page.map.map_height | default: "300px" }};"></div>
+      <div class="folium-map" id="map" style="width: {{ page.map.map_width | default: "100%" }}; height: {{ page.map.map_height | default: "300px" }};"></div>
     </div>
   {% endif %}
 </div>

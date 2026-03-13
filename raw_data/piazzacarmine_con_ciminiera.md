@@ -17,7 +17,6 @@ center_lng: 14.370868
 map:
     zoom: 18
     map_height: "500px"
-    map_width: "500px"
 date: 1970-01-01
 original_url: https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.179023658956988&idorvanity=174126156113405
 labels:

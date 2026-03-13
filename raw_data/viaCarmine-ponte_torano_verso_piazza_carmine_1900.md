@@ -23,9 +23,8 @@ images:
 date: 1900-01-01
 map:
     zoom: 18
-    activelayers : ['esri','1884']
+    activelayers : ['esri','1940']
     map_height: "500px"
-    map_width: "800px"
 date: 1900-01-01
 original_url: https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.179023658956988&idorvanity=174126156113405
 labels:

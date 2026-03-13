@@ -30,7 +30,9 @@ images: &id001
 map:
   zoom: 18
   map_height: 500px
-  map_width: 500px
+  activelayers:
+  - esri
+  - '1940'
 date: 1945-01-01
 original_url: https://www.facebook.com/fotodiieriedioggiPiedimonte/photos/p.497984370998267/497984370998267/
 labels:
