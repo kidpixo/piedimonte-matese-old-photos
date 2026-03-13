@@ -1,9 +1,11 @@
 // Constants and configuration for the map and layers
 // Use window.location.origin for local dev to avoid CORS issues with 0.0.0.0 vs localhost
 // Use base_url from template for production
-const BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? window.location.origin + "/assets/maps_data/"
-  : base_url + "/assets/maps_data/";
+const JEKYLL_BASE = (typeof base_url === "string" ? base_url : "").replace(/\/+$/, "");
+const SITE_BASE = new URL(`${JEKYLL_BASE}/`, window.location.origin);
+
+// Keep name for existing layer config usage
+const BASE_URL = new URL("assets/maps_data/", SITE_BASE).href;
 
 // Layer configuration: defines all options for each layer
 const LAYER_CONFIG = {
