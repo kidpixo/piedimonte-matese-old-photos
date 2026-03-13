@@ -11,3 +11,18 @@
   max-height: 30vh;
 }
 
+.timeline-toggle-btn {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.timeline-toggle-btn:hover,
+.timeline-toggle-btn:focus {
+  background-color: #f4f4f4;
+}
+

@@ -11,7 +11,7 @@ layout: default
   <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 
-  <link href="{{site.url}}{{ site.baseurl }}/assets/css/map.css" rel="stylesheet"/>
+  <link href="{{ '/assets/css/map.css' | relative_url }}" rel="stylesheet"/>
 
   <script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@3.10.0/dist/v3/webpack/bundle/georaster-layer-for-leaflet.min.js"></script>
@@ -28,7 +28,7 @@ layout: default
     const centerLat = {{ page.location.latitude_origin | default: page.center_lat | default: "41.355946" | jsonify }};
     const centerLng = {{ page.location.longitude_origin | default: page.center_lng | default: "14.370868" | jsonify }};
     const zoomLevel = {{ page.map.zoom | default: "18" | jsonify }};
-    const base_url = "{{ site.url }}{{ site.baseurl }}";
+    const base_url = "{{ site.baseurl }}";
     const map_id = "{{ page.id | default: "map" }}";
     const map_title = "{{ page.title | default: "Map" }}";
     const map_description = "{{ page.description | default: "Map description" }}";

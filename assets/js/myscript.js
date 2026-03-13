@@ -545,10 +545,26 @@ function createTimelineSlider() {
         },
 
         onAdd: function(map) {
+            const expandedWidth = '90%';
+
+            const bottomLeftCorner = map._controlCorners && map._controlCorners.bottomleft;
+            if (bottomLeftCorner) {
+                this._previousBottomLeftStyle = {
+                    width: bottomLeftCorner.style.width,
+                    display: bottomLeftCorner.style.display,
+                    justifyContent: bottomLeftCorner.style.justifyContent,
+                    pointerEvents: bottomLeftCorner.style.pointerEvents
+                };
+                bottomLeftCorner.style.width = '100%';
+                bottomLeftCorner.style.display = 'flex';
+                bottomLeftCorner.style.justifyContent = 'flex-start';
+                bottomLeftCorner.style.pointerEvents = 'none';
+            }
+
             // Main control wrapper
             const collapsibleControl = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
             collapsibleControl.style.pointerEvents = 'auto';
-            collapsibleControl.style.width = '100%';
+            collapsibleControl.style.width = expandedWidth;
             collapsibleControl.style.border = '1px solid #bbb';
             collapsibleControl.style.borderRadius = '8px';
             collapsibleControl.style.background = 'rgba(255,255,255,0.3)';
@@ -651,17 +667,13 @@ function createTimelineSlider() {
             controlsRow.appendChild(transportBar);
 
             // Toggle button (collapse)
-            const toggleBtn = L.DomUtil.create('a', 'leaflet-bar-part', collapsibleControl);
+            const toggleBtn = L.DomUtil.create('a', 'leaflet-bar-part leaflet-bar-part-single timeline-toggle-btn', collapsibleControl);
             toggleBtn.href = '#';
             toggleBtn.setAttribute('role', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle timeline controls');
-            toggleBtn.style.fontWeight = 'bold';
-            toggleBtn.style.cursor = 'pointer';
-            toggleBtn.style.height = '25%';
-            toggleBtn.style.display = 'flex';
-            toggleBtn.style.alignItems = 'center';
-            toggleBtn.style.justifyContent = 'center';
-            toggleBtn.innerHTML = '&#8942;';
+            toggleBtn.title = 'Collapse timeline controls';
+            toggleBtn.innerHTML = '«'; // fixed icon, state via title/aria
+;
             collapsibleControl.insertBefore(toggleBtn, sliderContainer);
 
             function applyTimelineOpacity(val) {
@@ -824,10 +836,11 @@ function createTimelineSlider() {
                     collapsibleControl.style.justifyContent = 'flex-start';
                 } else {
                     sliderContainer.style.display = 'flex';
-                    collapsibleControl.style.width = '100%';
+                    collapsibleControl.style.width = expandedWidth;
                     collapsibleControl.style.justifyContent = '';
                 }
-                toggleBtn.innerHTML = collapsed ? '&#9776;' : '&#8942;';
+                toggleBtn.innerHTML = collapsed ? '◷' : '«';
+                toggleBtn.title = collapsed ? 'Expand timeline controls' : 'Collapse timeline controls';
             });
 
             // Keep map interactions isolated from control interactions
@@ -842,18 +855,18 @@ function createTimelineSlider() {
             if (typeof this._stopTimeline === 'function') {
                 this._stopTimeline();
             }
+            const bottomLeftCorner = layers.map && layers.map._controlCorners && layers.map._controlCorners.bottomleft;
+            if (bottomLeftCorner && this._previousBottomLeftStyle) {
+                bottomLeftCorner.style.width = this._previousBottomLeftStyle.width;
+                bottomLeftCorner.style.display = this._previousBottomLeftStyle.display;
+                bottomLeftCorner.style.justifyContent = this._previousBottomLeftStyle.justifyContent;
+                bottomLeftCorner.style.pointerEvents = this._previousBottomLeftStyle.pointerEvents;
+            }
         }
     });
 
     layers.timelineControl = new TimelineControl();
     layers.timelineControl.addTo(layers.map);
-
-    const bottomLeftCorner = layers.map._controlCorners && layers.map._controlCorners.bottomleft;
-    if (bottomLeftCorner) {
-        bottomLeftCorner.style.width = '100%';
-        bottomLeftCorner.style.display = 'flex';
-        bottomLeftCorner.style.justifyContent = 'center';
-    }
 }
 
 // Patch: add data-layerid to checkboxes after layer control is created
