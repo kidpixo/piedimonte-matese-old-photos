@@ -51,7 +51,7 @@ collections:
 
 # Explicitly exclude the raw data so Jekyll doesn't try to build it
 exclude:
-  - archive
+  - archive/
   - raw_data/
   - scripts/
   - vendor/

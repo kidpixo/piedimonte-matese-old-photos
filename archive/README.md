@@ -86,19 +86,6 @@ Link [foto](https://www.facebook.com/photo/?fbid=1145463277627274)
 Link [foto](https://www.facebook.com/photo/?fbid=1145463317627270)
 ![foto]()Sepicciano_inizio_1920.jpg
 
-## ViaAntonioGaetani_1910.jpg
-
-Link [foto](https://www.facebook.com/photo/?fbid=1145485440958391)
-![original](ViaAntonioGaetani_1910.jpg)
-![restaured](ViaAntonioGaetani_1910.jpg)
-
-Via Antonio Gaetani
-Legione del Matese 1910.
-Locanda trattoria di Nicola Cariola (attualmente posizione del negozio Aurum argenti)
-Foto condivisa da Vittorio Imperadore
-
-- **Daniela Mastrolorenzo**: Locanda Trattoria Nicola Caiola originari di Cerreto Sannita nato circa 1852. Sua moglie Del Vecchio Teresa (1866 circa) Tra i figli c'erano Virginia sposata con Antonio di Lauro, Andrea, Antonio, Pacifico Marcellino... (Una parte nati a cerreto e una seconda parte a Piedimonte).  Fino al 1897 erano a Cerreto.  Pacifico 1904 nato a Piedimonte.  Possibile si siano stabiliti a Piedimonte tra il 1897 e 1904.
-
 ## Lavatoio_PiazzaEuropa_verso_Mascagni.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=1211844917346971)
