@@ -13,6 +13,7 @@ Inspired by convert_photos_coords.py for location/GeoJSON processing.
 
 import logging
 import pathlib
+import re
 from typing import Any, Dict, List, Optional, Tuple
 import yaml
 import json
@@ -288,6 +289,36 @@ def validate_coordinates(coords: Dict, coord_set: str) -> bool:
     return all(k in coords and is_numeric_coordinate(coords.get(k)) for k in required_keys)
 
 
+def diagnose_location_keys(coords: Dict, source: str = "") -> None:
+    """Log a detailed diff of found vs expected coordinate keys.
+    Uses difflib to flag likely typos so the user can fix them quickly."""
+    import difflib
+    all_required = set().union(*REQUIRED_COORD_SETS.values())
+    found_keys = set(coords.keys())
+    missing = all_required - found_keys
+    unexpected = found_keys - all_required
+
+    prefix = f"  [{source}]" if source else " "
+
+    if not missing:
+        return  # nothing to diagnose
+
+    logger.error(f"{prefix} Location key diagnosis:")
+    logger.error(f"{prefix}   Expected keys : {sorted(all_required)}")
+    logger.error(f"{prefix}   Found keys    : {sorted(found_keys)}")
+    logger.error(f"{prefix}   Missing keys  : {sorted(missing)}")
+
+    # Suggest fixes for each missing key
+    for key in sorted(missing):
+        candidates = difflib.get_close_matches(key, found_keys, n=3, cutoff=0.6)
+        if candidates:
+            logger.error(
+                f"{prefix}   TYPO? '{key}' not found — did you mean: {candidates}?"
+            )
+    if unexpected:
+        logger.warning(f"{prefix}   Unrecognised keys (possible typos): {sorted(unexpected)}")
+
+
 def add_geojson_to_location(location_data: dict) -> dict:
     """Add GeoJSON geometry strings to the location dict."""
     if not location_data or not isinstance(location_data, dict):
@@ -296,6 +327,7 @@ def add_geojson_to_location(location_data: dict) -> dict:
     # Validate origin is present
     if not validate_coordinates(coords, "origin"):
         logger.warning("  Cannot generate GeoJSON: missing origin coordinates")
+        diagnose_location_keys(coords, source="add_geojson_to_location")
         return location_data
     # Create origin_geojson
     lat_origin = float(coords["latitude_origin"])
@@ -532,24 +564,27 @@ def process_images(slug: str, metadata: Dict) -> bool:
     return False
 
 
-def process_location_data(metadata: Dict) -> None:
+def process_location_data(metadata: Dict, source: str = "") -> None:
     location_data = metadata.get("location")
     if not location_data:
         return
     coords = extract_coords_from_location(location_data)
-    if validate_coordinates(coords, "origin"):
-        lat_origin = float(coords["latitude_origin"])
-        lon_origin = float(coords["longitude_origin"])
-        metadata["_origin"] = Point(lon_origin, lat_origin)
-        if validate_coordinates(coords, "vertices"):
-            lat_left = float(coords["latitude_vertex_left"])
-            lon_left = float(coords["longitude_vertex_left"])
-            lat_right = float(coords["latitude_vertex_right"])
-            lon_right = float(coords["longitude_vertex_right"])
-            vertex_left = Point(lon_left, lat_left)
-            vertex_right = Point(lon_right, lat_right)
-            origin = Point(lon_origin, lat_origin)
-            metadata["_fov"] = Polygon([origin, vertex_left, vertex_right, origin])
+    if not validate_coordinates(coords, "origin"):
+        logger.warning(f"  [{source or 'location'}] Skipping location: origin coordinates missing or invalid")
+        diagnose_location_keys(coords, source=source or "location")
+        return
+    lat_origin = float(coords["latitude_origin"])
+    lon_origin = float(coords["longitude_origin"])
+    metadata["_origin"] = Point(lon_origin, lat_origin)
+    if validate_coordinates(coords, "vertices"):
+        lat_left = float(coords["latitude_vertex_left"])
+        lon_left = float(coords["longitude_vertex_left"])
+        lat_right = float(coords["latitude_vertex_right"])
+        lon_right = float(coords["longitude_vertex_right"])
+        vertex_left = Point(lon_left, lat_left)
+        vertex_right = Point(lon_right, lat_right)
+        origin = Point(lon_origin, lat_origin)
+        metadata["_fov"] = Polygon([origin, vertex_left, vertex_right, origin])
     metadata["location"] = add_geojson_to_location(location_data)
 
 
@@ -585,13 +620,44 @@ def process_post(filepath: pathlib.Path) -> Optional[Dict]:
     process_images(slug, metadata)
     
     # Step 4: Extract location and generate GeoJSON
-    process_location_data(metadata)
+    process_location_data(metadata, source=filepath.name)
     
     # Step 5: Store markdown body for later output
     metadata["_body"] = post.content
     
     logger.info(f"✓ Successfully processed: {slug}")
     return metadata
+
+
+def jekyll_slugify(value: str) -> str:
+    """Approximate Jekyll slug behavior for collection URLs."""
+    if not value:
+        return ""
+    normalized = value.strip().lower().replace("_", "-")
+    normalized = re.sub(r"[^a-z0-9\-]+", "-", normalized)
+    normalized = re.sub(r"-+", "-", normalized)
+    return normalized.strip("-")
+
+
+def derive_photo_post_rel_url(metadata: Dict) -> str:
+    """Build relative collection URL for the photo post from primary image filename."""
+    images = metadata.get("images")
+    primary_file = ""
+
+    if isinstance(images, list) and images:
+        primary = next((img for img in images if img.get("is_primary")), images[0])
+        if isinstance(primary, dict):
+            primary_file = primary.get("file", "")
+
+    if primary_file:
+        stem = pathlib.Path(primary_file).stem
+        page_slug = jekyll_slugify(stem.replace("-main", ""))
+        if page_slug:
+            return f"/photos/{page_slug}/"
+
+    fallback = metadata.get("slug") or metadata.get("title") or ""
+    fallback_slug = jekyll_slugify(str(fallback))
+    return f"/photos/{fallback_slug}/" if fallback_slug else ""
 
 
 # ============================================================================
@@ -615,6 +681,7 @@ def generate_geojson(all_metadata: List[Dict]) -> bool:
         for metadata in all_metadata:
             # Determine filename/slug
             slug = metadata.get('slug') if metadata.get('slug') else metadata.get('title', '')
+            photo_post_rel_url = derive_photo_post_rel_url(metadata)
             # Try to get primary image filename
             filename = ''
             images = metadata.get('images')
@@ -631,6 +698,7 @@ def generate_geojson(all_metadata: List[Dict]) -> bool:
                     "date": str(metadata.get("date", "")),
                     "labels": ",".join(metadata.get("labels", [])),
                     "filename": filename,
+                    "photo_post_rel_url": photo_post_rel_url,
                     "text": metadata.get("title", ""),
                     "geometry": metadata["_origin"],
                 })
