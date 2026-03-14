@@ -1,12 +1,12 @@
 ---
 layout: photo
 location:
-    latitude_origin: 
-    longitude_origin: 
-    latitude_vertex_left: 
-    longitude_vertex_left:
-    latitude_vertex_right: 
-    longitude_vertex_right: 
+    latitude_origin: 41.35538965 
+    longitude_origin: 14.37222260
+    latitude_vertex_left: 41.35540291
+    longitude_vertex_left: 14.37234874
+    latitude_vertex_right: 41.35530823
+    longitude_vertex_right: 14.37227137
 title: "Via_Carmine_Cotonificio"
 images:
   - file: "Via_Carmine_Cotonificio.jpg"
@@ -25,7 +25,8 @@ images:
     note: "Colorized interpretation"
     alt: "Versione colorizzata della foto storica"
 map:
-    zoom: 18
+    zoom: 20
+    activelayers : ['esri','1940']
     map_height: "500px"
 date: 1945-01-01
 original_url: https://www.facebook.com/fotodiieriedioggiPiedimonte/photos/p.497984370998267/497984370998267/

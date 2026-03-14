@@ -1,8 +1,12 @@
 ---
 layout: photo
 location: 
-    latitude_origint: 41.355946
-    longitude_origin: 14.370868
+    latitude_origin: 41.35521607
+    longitude_origin: 14.37186984
+    latitude_vertex_left: 41.3544283
+    longitude_vertex_left: 14.3724656
+    latitude_vertex_right: 41.3545028
+    longitude_vertex_right: 14.3716567
 title: "piazzacarmine con ciminiera"
 
 images:
@@ -12,10 +16,20 @@ images:
     note: "piazzacarmine_con_ciminiera"
     alt: "piazzacarmine_con_ciminiera"
 
+  - file: "piazzacarmine_con_ciminiera-restored.jpg"
+    type: "restoration"
+    note: "Noise-reduced version"
+    alt: "Versione denoise della stessa scena"
+
+  - file: "piazzacarmine_con_ciminiera-restored-color.jpg"
+    type: "colorized"
+    note: "Colorized interpretation"
+    alt: "Versione colorizzata della foto storica"
+
 center_lat: 41.355946
 center_lng: 14.370868
 map:
-    zoom: 18
+    zoom: 20
     map_height: "500px"
 date: 1970-01-01
 original_url: https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.179023658956988&idorvanity=174126156113405

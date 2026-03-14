@@ -55,7 +55,10 @@ Comments:
 
 ## piazzacarmine_con_ciminiera.jpg
 
-![foto](piazzacarmine_con_ciminiera.jpg)
+![originl](piazzacarmine_con_ciminiera.jpg)
+![denoise](piazzacarmine_con_ciminiera-restored.jpg)
+![colorized](piazzacarmine_con_ciminiera-restored-color.jpg)
+
 Link [foto](https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.179023658956988&idorvanity=174126156113405)
 
 Margherita Della Paolera Mastrangelo: Ricordo il ritrovamento di ossa umane durante il rifacimento della piazza. Eravamo bambini e nonostante i genitori ci impedissero di andare li, ogni sotterfugio era buono per andare a curiosare. C’era Giovanni Altieri R.I.P. Il “campusantaru”, cosi denominato in gergo locale, per via del suo lavoro di inumare ed esumare salme nel cimitero locale, che riempiva questi grandi contenitori in zinco, via via trasportati al cimitero una volta riempiti.

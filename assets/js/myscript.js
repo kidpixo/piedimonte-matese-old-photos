@@ -501,10 +501,11 @@ async function addPhotoLayers() {
                         if (props.text && props.filename) {
                             const text = String(props.text).replace(/['"]+/g, "");
                             const filename = String(props.filename);
-                            const popupContent = `<div><h2>${text}</h2><a href="${BASE_URL}photos/${filename}" target="_blank" rel="noopener noreferrer">original` +
+                            const photo_post_rel_url = String(props.photo_post_rel_url);
+                            const popupContent = `<div><h2>${text}</h2><a href="${SITE_BASE.href}${photo_post_rel_url}" target="_blank" rel="noopener noreferrer">original` +
                                 (filename.includes(".webm")
-                                    ? `<video controls id="markers_popup_photos" src="${BASE_URL}assets/thumbs/${filename}" alt="${filename}"></video>`
-                                    : `<img id="markers_popup_photos" src="${BASE_URL}assets/thumbs/${filename}" alt="${filename}">`) +
+                                    ? `<video controls id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}"></video>`
+                                    : `<img id="markers_popup_photos" src="${SITE_BASE.href}${filename}" alt="${filename}">`) +
                                 "</a></div>";
                             layer.bindPopup(popupContent, { maxWidth: "auto" });
                         }
