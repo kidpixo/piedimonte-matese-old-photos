@@ -14,6 +14,7 @@ Inspired by convert_photos_coords.py for location/GeoJSON processing.
 import logging
 import pathlib
 import re
+import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 import yaml
 import json
@@ -23,7 +24,6 @@ try:
     from PIL import Image
     import geopandas as gpd
     from shapely.geometry import Point, Polygon, LineString
-    import pandas as pd
 except ImportError as e:
     print(f"ERROR: Missing required package: {e}")
     print("Install with: pip install python-frontmatter Pillow geopandas shapely pandas")
@@ -52,6 +52,7 @@ IMAGE_QUALITY = 90
 MAX_IMAGE_WIDTH = 2000
 RGB_BACKGROUND_COLOR = (255, 255, 255)
 IMAGE_MODES_WITH_ALPHA = ("RGBA", "LA", "P")
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".tif", ".tiff", ".webm"}
 
 # Coordinate validation sets
 REQUIRED_COORD_SETS = {
@@ -265,9 +266,25 @@ def extract_location(location_data: List[Dict]) -> Tuple[Optional[Point], Option
         return None, None
 
 
-def extract_coords_from_location(location_data: dict) -> Dict:
+def extract_coords_from_location(location_data: Any) -> Dict:
     """Extract all coordinate key-value pairs from location dict."""
-    return dict(location_data) if isinstance(location_data, dict) else {}
+    if isinstance(location_data, dict):
+        return dict(location_data)
+    if isinstance(location_data, list):
+        merged: Dict = {}
+        for item in location_data:
+            if isinstance(item, dict):
+                merged.update(item)
+        return merged
+    return {}
+
+
+def normalize_location_data(location_data: Any) -> Dict:
+    """Normalize location payload to a single dict shape."""
+    normalized = extract_coords_from_location(location_data)
+    for key in GEOMETRY_KEYS_TO_REMOVE:
+        normalized.pop(key, None)
+    return normalized
 
 
 def is_numeric_coordinate(value: Any) -> bool:
@@ -319,21 +336,22 @@ def diagnose_location_keys(coords: Dict, source: str = "") -> None:
         logger.warning(f"{prefix}   Unrecognised keys (possible typos): {sorted(unexpected)}")
 
 
-def add_geojson_to_location(location_data: dict) -> dict:
+def add_geojson_to_location(location_data: Any) -> Dict:
     """Add GeoJSON geometry strings to the location dict."""
-    if not location_data or not isinstance(location_data, dict):
-        return location_data
-    coords = extract_coords_from_location(location_data)
+    if not location_data:
+        return {}
+    location_dict = normalize_location_data(location_data)
+    coords = extract_coords_from_location(location_dict)
     # Validate origin is present
     if not validate_coordinates(coords, "origin"):
         logger.warning("  Cannot generate GeoJSON: missing origin coordinates")
         diagnose_location_keys(coords, source="add_geojson_to_location")
-        return location_data
+        return location_dict
     # Create origin_geojson
     lat_origin = float(coords["latitude_origin"])
     lon_origin = float(coords["longitude_origin"])
     origin_geom = create_geojson_point(lat_origin, lon_origin)
-    location_data["origin_geojson"] = json.dumps(origin_geom)
+    location_dict["origin_geojson"] = json.dumps(origin_geom)
     # Create fov_geojson and line_of_sight_geojson if vertices present
     if validate_coordinates(coords, "vertices"):
         lat_left = float(coords["latitude_vertex_left"])
@@ -341,15 +359,25 @@ def add_geojson_to_location(location_data: dict) -> dict:
         lat_right = float(coords["latitude_vertex_right"])
         lon_right = float(coords["longitude_vertex_right"])
         fov_geom = create_geojson_polygon(lat_origin, lon_origin, lat_left, lon_left, lat_right, lon_right)
-        location_data["fov_geojson"] = json.dumps(fov_geom)
+        location_dict["fov_geojson"] = json.dumps(fov_geom)
         if is_numeric_coordinate(coords.get("latitude_boresight")) and is_numeric_coordinate(coords.get("longitude_boresight")):
             lat_bs = float(coords["latitude_boresight"])
             lon_bs = float(coords["longitude_boresight"])
         else:
             lat_bs, lon_bs = calculate_boresight_point(lat_left, lon_left, lat_right, lon_right)
         los_geom = create_geojson_linestring(lat_origin, lon_origin, lat_bs, lon_bs)
-        location_data["line_of_sight_geojson"] = json.dumps(los_geom)
-    return location_data
+        location_dict["line_of_sight_geojson"] = json.dumps(los_geom)
+    return location_dict
+
+
+def validate_frontmatter_geo(metadata: Dict, filepath: pathlib.Path) -> Tuple[bool, str]:
+    """Validate only geo-required frontmatter fields."""
+    missing = REQUIRED_FIELDS - set(metadata.keys())
+    if missing:
+        msg = f"{filepath.name}: Missing fields for GeoJSON: {missing}"
+        logger.error(msg)
+        return False, msg
+    return True, ""
 
 
 # ============================================================================
@@ -568,10 +596,12 @@ def process_location_data(metadata: Dict, source: str = "") -> None:
     location_data = metadata.get("location")
     if not location_data:
         return
-    coords = extract_coords_from_location(location_data)
+    location_dict = normalize_location_data(location_data)
+    coords = extract_coords_from_location(location_dict)
     if not validate_coordinates(coords, "origin"):
         logger.warning(f"  [{source or 'location'}] Skipping location: origin coordinates missing or invalid")
         diagnose_location_keys(coords, source=source or "location")
+        metadata["location"] = location_dict
         return
     lat_origin = float(coords["latitude_origin"])
     lon_origin = float(coords["longitude_origin"])
@@ -585,7 +615,7 @@ def process_location_data(metadata: Dict, source: str = "") -> None:
         vertex_right = Point(lon_right, lat_right)
         origin = Point(lon_origin, lat_origin)
         metadata["_fov"] = Polygon([origin, vertex_left, vertex_right, origin])
-    metadata["location"] = add_geojson_to_location(location_data)
+    metadata["location"] = add_geojson_to_location(location_dict)
 
 
 def process_post(filepath: pathlib.Path) -> Optional[Dict]:
@@ -629,6 +659,313 @@ def process_post(filepath: pathlib.Path) -> Optional[Dict]:
     return metadata
 
 
+def process_geo_metadata(filepath: pathlib.Path) -> Optional[Dict]:
+    """Process a single file for GeoJSON only (no images, no _photos markdown)."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            post = frontmatter.load(f)
+    except Exception as e:
+        logger.error(f"Failed to read {filepath.name} for GeoJSON: {e}")
+        return None
+
+    metadata = post.metadata.copy()
+    is_valid, _ = validate_frontmatter_geo(metadata, filepath)
+    if not is_valid:
+        return None
+
+    metadata["slug"] = slug_from_path(filepath)
+    process_location_data(metadata, source=filepath.name)
+    return metadata
+
+
+def collect_geojson_metadata(md_files: List[pathlib.Path]) -> List[Dict]:
+    """Collect and normalize metadata used for GeoJSON from a list of markdown files."""
+    output: List[Dict] = []
+    for filepath in sorted(md_files):
+        metadata = process_geo_metadata(filepath)
+        if metadata:
+            output.append(metadata)
+    return output
+
+
+def get_git_raw_data_changes() -> Tuple[List[pathlib.Path], List[str]]:
+    """Return changed raw_data markdown paths and deleted markdown slugs from git status."""
+    cmd = [
+        "git",
+        "-C",
+        str(PROJECT_ROOT),
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+        "--",
+        "raw_data",
+    ]
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except Exception as e:
+        logger.warning(f"Unable to read git status; fallback to all files: {e}")
+        return sorted(RAW_DATA_DIR.glob("*.md")), []
+
+    changed_files: set[pathlib.Path] = set()
+    deleted_slugs: set[str] = set()
+    raw_dir = RAW_DATA_DIR.resolve()
+
+    for line in result.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        status = line[:2]
+        path_part = line[3:].strip()
+
+        old_path = None
+        new_path = path_part
+        if " -> " in path_part:
+            old_path, new_path = path_part.split(" -> ", 1)
+            old_path = old_path.strip()
+            new_path = new_path.strip()
+
+        if old_path and old_path.startswith("raw_data/") and old_path.endswith(".md") and "R" in status:
+            deleted_slugs.add(pathlib.Path(old_path).stem)
+
+        if path_part.startswith("raw_data/") and path_part.endswith(".md") and "D" in status:
+            deleted_slugs.add(pathlib.Path(path_part).stem)
+
+        candidate = (PROJECT_ROOT / new_path).resolve()
+        if candidate.suffix.lower() == ".md" and candidate.parent == raw_dir and candidate.exists():
+            changed_files.add(candidate)
+
+    return sorted(changed_files), sorted(deleted_slugs)
+
+
+def prune_deleted_photos(slugs: List[str]) -> int:
+    """Delete generated _photos markdown for removed raw_data records."""
+    removed = 0
+    for slug in slugs:
+        target = PHOTOS_OUTPUT_DIR / f"{slug}.md"
+        if target.exists():
+            target.unlink()
+            removed += 1
+            logger.info(f"Pruned stale output: {target}")
+    return removed
+
+
+def is_image_path(path: pathlib.Path) -> bool:
+    return path.suffix.lower() in IMAGE_EXTENSIONS
+
+
+def iter_image_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
+    if not base_dir.exists():
+        return []
+    return sorted([p for p in base_dir.rglob("*") if p.is_file() and is_image_path(p)])
+
+
+def collect_referenced_raw_images(metadata: Dict) -> set[pathlib.Path]:
+    refs: set[pathlib.Path] = set()
+    normalized_images = normalize_images_from_metadata(metadata)
+    for image_obj in normalized_images:
+        image_file = image_obj.get("file")
+        if image_file:
+            refs.add((RAW_DATA_DIR / image_file).resolve())
+    return refs
+
+
+def expected_generated_assets(slug: str, metadata: Dict) -> Tuple[set[pathlib.Path], set[pathlib.Path]]:
+    """Compute expected generated image/thumb files for a raw metadata record."""
+    expected_images: set[pathlib.Path] = set()
+    expected_thumbs: set[pathlib.Path] = set()
+
+    normalized_images = normalize_images_from_metadata(metadata)
+    if not normalized_images:
+        return expected_images, expected_thumbs
+
+    primary_index = 0
+    for idx, image_obj in enumerate(normalized_images):
+        if image_obj.get("is_primary"):
+            primary_index = idx
+            break
+
+    for idx, image_obj in enumerate(normalized_images):
+        image_name = pathlib.Path(image_obj.get("file", "")).name
+        is_primary = idx == primary_index
+        if is_primary:
+            expected_images.add((IMAGES_DIR / f"{slug}-main.jpg").resolve())
+            expected_thumbs.add((THUMBS_DIR / f"{slug}.jpg").resolve())
+        else:
+            expected_images.add((VARIANTS_DIR / slug / image_name).resolve())
+            expected_thumbs.add((VARIANTS_THUMBS_DIR / slug / image_name).resolve())
+
+    return expected_images, expected_thumbs
+
+
+def summarize_check_report(report: Dict, json_output: bool) -> None:
+    if json_output:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return
+
+    logger.info("=== CHECK REPORT ===")
+    logger.info(f"raw_md_files={report['stats']['raw_md_files']}")
+    logger.info(f"raw_images={report['stats']['raw_images']}")
+    logger.info(f"photos_md_files={report['stats']['photos_md_files']}")
+    logger.info(f"expected_generated_images={report['stats']['expected_generated_images']}")
+    logger.info(f"expected_generated_thumbs={report['stats']['expected_generated_thumbs']}")
+    logger.info(f"errors={len(report['errors'])} warnings={len(report['warnings'])}")
+
+    logger.info("-- raw_data/*.md --")
+    for item in report["raw_md"]:
+        logger.info(
+            f"{item['file']} geo_valid={item['geo_valid']} refs={item['referenced_images']}"
+        )
+
+    if report["errors"]:
+        logger.error("-- Errors --")
+        for msg in report["errors"]:
+            logger.error(msg)
+
+    if report["warnings"]:
+        logger.warning("-- Warnings --")
+        for msg in report["warnings"]:
+            logger.warning(msg)
+
+
+def run_check_mode(json_output: bool = False, strict_warnings: bool = False) -> int:
+    """Run repository consistency checks.
+
+    Exit codes:
+      0 = no errors
+      1 = one or more errors
+            -1 = warnings found in strict-warnings mode (shell exit code 255)
+      2 = internal failure
+    """
+    try:
+        raw_md_files = sorted(RAW_DATA_DIR.glob("*.md"))
+        raw_slugs = {p.stem for p in raw_md_files}
+        photos_md_files = sorted(PHOTOS_OUTPUT_DIR.glob("*.md")) if PHOTOS_OUTPUT_DIR.exists() else []
+        photos_slugs = {p.stem for p in photos_md_files}
+
+        referenced_raw_images: set[pathlib.Path] = set()
+        expected_images: set[pathlib.Path] = set()
+        expected_thumbs: set[pathlib.Path] = set()
+
+        report: Dict[str, Any] = {
+            "stats": {
+                "raw_md_files": len(raw_md_files),
+                "raw_images": 0,
+                "photos_md_files": len(photos_md_files),
+                "expected_generated_images": 0,
+                "expected_generated_thumbs": 0,
+            },
+            "raw_md": [],
+            "errors": [],
+            "warnings": [],
+        }
+
+        logger.info(f"Check: scanning {len(raw_md_files)} raw_data/*.md files")
+
+        for filepath in raw_md_files:
+            item = {
+                "file": filepath.name,
+                "geo_valid": False,
+                "referenced_images": 0,
+            }
+
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    post = frontmatter.load(f)
+            except Exception as e:
+                report["errors"].append(f"{filepath.name}: failed to read frontmatter: {e}")
+                report["raw_md"].append(item)
+                continue
+
+            metadata = post.metadata.copy()
+
+            is_valid, msg = validate_frontmatter(post, filepath)
+            if not is_valid:
+                report["errors"].append(msg)
+
+            location_data = normalize_location_data(metadata.get("location"))
+            coords = extract_coords_from_location(location_data)
+            geo_valid = validate_coordinates(coords, "origin")
+            item["geo_valid"] = geo_valid
+            if not geo_valid:
+                report["errors"].append(f"{filepath.name}: invalid or missing origin geo coordinates")
+
+            refs = collect_referenced_raw_images(metadata)
+            item["referenced_images"] = len(refs)
+            referenced_raw_images.update(refs)
+
+            for ref in refs:
+                if not ref.exists():
+                    report["errors"].append(
+                        f"{filepath.name}: referenced image missing: {ref.relative_to(PROJECT_ROOT)}"
+                    )
+
+            slug = filepath.stem
+            expected_photo = PHOTOS_OUTPUT_DIR / f"{slug}.md"
+            if not expected_photo.exists():
+                report["warnings"].append(
+                    f"{filepath.name}: expected generated markdown missing: {expected_photo.relative_to(PROJECT_ROOT)}"
+                )
+
+            exp_images, exp_thumbs = expected_generated_assets(slug, metadata)
+            expected_images.update(exp_images)
+            expected_thumbs.update(exp_thumbs)
+
+            report["raw_md"].append(item)
+
+        raw_image_files = set(iter_image_files(RAW_DATA_DIR))
+        report["stats"]["raw_images"] = len(raw_image_files)
+
+        orphan_raw_images = sorted(raw_image_files - referenced_raw_images)
+        for orphan in orphan_raw_images:
+            report["warnings"].append(
+                f"Orphan raw_data image not referenced by any markdown: {orphan.relative_to(PROJECT_ROOT)}"
+            )
+
+        orphan_photos_md = sorted(photos_slugs - raw_slugs)
+        for slug in orphan_photos_md:
+            orphan_path = PHOTOS_OUTPUT_DIR / f"{slug}.md"
+            report["warnings"].append(
+                f"Orphan _photos markdown without raw_data source: {orphan_path.relative_to(PROJECT_ROOT)}"
+            )
+
+        actual_generated_images: set[pathlib.Path] = set()
+        if IMAGES_DIR.exists():
+            actual_generated_images.update([p.resolve() for p in IMAGES_DIR.glob("*-main.jpg") if p.is_file()])
+        if VARIANTS_DIR.exists():
+            actual_generated_images.update([p.resolve() for p in iter_image_files(VARIANTS_DIR)])
+
+        actual_generated_thumbs: set[pathlib.Path] = set()
+        if THUMBS_DIR.exists():
+            actual_generated_thumbs.update([p.resolve() for p in THUMBS_DIR.glob("*.jpg") if p.is_file()])
+        if VARIANTS_THUMBS_DIR.exists():
+            actual_generated_thumbs.update([p.resolve() for p in iter_image_files(VARIANTS_THUMBS_DIR)])
+
+        report["stats"]["expected_generated_images"] = len(expected_images)
+        report["stats"]["expected_generated_thumbs"] = len(expected_thumbs)
+
+        orphan_generated_images = sorted(actual_generated_images - expected_images)
+        for orphan in orphan_generated_images:
+            report["warnings"].append(
+                f"Orphan generated image in assets/images: {orphan.relative_to(PROJECT_ROOT)}"
+            )
+
+        orphan_generated_thumbs = sorted(actual_generated_thumbs - expected_thumbs)
+        for orphan in orphan_generated_thumbs:
+            report["warnings"].append(
+                f"Orphan generated thumb in assets/thumbs: {orphan.relative_to(PROJECT_ROOT)}"
+            )
+
+        summarize_check_report(report, json_output=json_output)
+        if report["errors"]:
+            return 1
+        if strict_warnings and report["warnings"]:
+            logger.error("Strict warnings mode: warnings present, failing check with -1")
+            return -1
+        return 0
+    except Exception as e:
+        logger.exception(f"Check mode failed: {e}")
+        return 2
+
+
 def jekyll_slugify(value: str) -> str:
     """Approximate Jekyll slug behavior for collection URLs."""
     if not value:
@@ -664,7 +1001,7 @@ def derive_photo_post_rel_url(metadata: Dict) -> str:
 # GeoJSON Generation
 # ============================================================================
 
-def generate_geojson(all_metadata: List[Dict]) -> bool:
+def generate_geojson(all_metadata: List[Dict]) -> Dict[str, Any]:
     """
     Aggregate all processed photos into GeoJSON files using geopandas.
     Follows the pattern from convert_photos_coords.py:
@@ -733,7 +1070,12 @@ def generate_geojson(all_metadata: List[Dict]) -> bool:
 
         if not origins_data and not fovs_data and not lov_data:
             logger.warning("No valid location data to generate GeoJSON")
-            return False
+            return {
+                "ok": False,
+                "origins": 0,
+                "fovs": 0,
+                "lov": 0,
+            }
 
         # Write origins GeoJSON (Point features)
         if origins_data:
@@ -756,11 +1098,21 @@ def generate_geojson(all_metadata: List[Dict]) -> bool:
             lov_gdf.to_file(lov_path, driver="GeoJSON")
             logger.debug(f"Generated: {lov_path} ({len(lov_gdf)} lines)")
 
-        return True
+        return {
+            "ok": True,
+            "origins": len(origins_data),
+            "fovs": len(fovs_data),
+            "lov": len(lov_data),
+        }
 
     except Exception as e:
         logger.error(f"Failed to generate GeoJSON: {e}")
-        return False
+        return {
+            "ok": False,
+            "origins": 0,
+            "fovs": 0,
+            "lov": 0,
+        }
 
 
 # ============================================================================
@@ -829,6 +1181,14 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Process research photos and generate GeoJSON.")
     parser.add_argument('--log', dest='loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level (default: INFO)')
+    parser.add_argument('--check', action='store_true', help='Run integrity checks across raw_data, _photos and generated assets')
+    parser.add_argument('--json', action='store_true', help='With --check, emit machine-readable JSON report')
+    parser.add_argument('--strict-warnings', action='store_true', help='With --check, treat warnings as failure (returns -1, shell exit 255)')
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.add_parser("geo", help="Generate GeoJSON only from all raw_data/*.md")
+    subparsers.add_parser("all", help="Process all raw_data/*.md to _photos and regenerate GeoJSON")
+    changed_parser = subparsers.add_parser("changed", help="Process only git-changed raw_data/*.md to _photos")
+    changed_parser.add_argument("--prune", action="store_true", help="Remove stale _photos/*.md for deleted raw_data/*.md")
     args = parser.parse_args()
 
     loglevel = getattr(logging, args.loglevel.upper(), logging.INFO)
@@ -839,44 +1199,90 @@ def main():
     logger.info(f"Raw data: {RAW_DATA_DIR}")
     logger.info(f"Output: {PHOTOS_OUTPUT_DIR}")
 
+    if args.json and not args.check:
+        parser.error("--json can only be used together with --check")
+
+    if args.strict_warnings and not args.check:
+        parser.error("--strict-warnings can only be used together with --check")
+
+    if args.check and args.command:
+        parser.error("--check cannot be combined with subcommands (geo/all/changed)")
+
     # Validate raw_data directory
     if not RAW_DATA_DIR.exists():
         logger.error(f"raw_data directory not found: {RAW_DATA_DIR}")
-        return False
+        return 2 if args.check else False
+
+    if args.check:
+        return run_check_mode(json_output=bool(args.json), strict_warnings=bool(args.strict_warnings))
 
     # Find all markdown files to process
-    md_files = list(RAW_DATA_DIR.glob("*.md"))
-    if not md_files:
+    all_md_files = sorted(RAW_DATA_DIR.glob("*.md"))
+    if not all_md_files:
         logger.warning("No .md files found in raw_data/")
         return False
 
-    logger.info(f"Found {len(md_files)} .md files to process")
+    mode = args.command or "geo"
+    logger.info(f"Mode: {mode}")
 
-    # Process each markdown file
-    processed_metadata = []
+    if mode == "geo":
+        geojson_metadata = collect_geojson_metadata(all_md_files)
+        geo_stats = generate_geojson(geojson_metadata)
+        logger.info(
+            f"Summary mode=geo files={len(all_md_files)} geo_ok={geo_stats['ok']} "
+            f"origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']}"
+        )
+        return bool(geo_stats["ok"])
+
+    if mode == "changed":
+        changed_files, deleted_slugs = get_git_raw_data_changes()
+        logger.info(
+            f"Changed scope files={len(changed_files)} deleted={len(deleted_slugs)} prune={bool(getattr(args, 'prune', False))}"
+        )
+
+        success_count = 0
+        for filepath in changed_files:
+            metadata = process_post(filepath)
+            if metadata:
+                slug = slug_from_path(filepath)
+                if write_jekyll_markdown(slug, metadata):
+                    success_count += 1
+                if loglevel == logging.DEBUG:
+                    logger.debug(f"Processed file: {filepath.name}")
+
+        pruned_count = 0
+        if getattr(args, "prune", False):
+            pruned_count = prune_deleted_photos(deleted_slugs)
+
+        logger.info(
+            f"Summary mode=changed changed_files={len(changed_files)} posts_written={success_count} pruned={pruned_count}"
+        )
+        return True
+
+    # mode == "all"
     success_count = 0
-
-    for filepath in sorted(md_files):
+    for filepath in all_md_files:
         metadata = process_post(filepath)
         if metadata:
-            processed_metadata.append(metadata)
-            # Write processed file to Jekyll format
             slug = slug_from_path(filepath)
             if write_jekyll_markdown(slug, metadata):
                 success_count += 1
             if loglevel == logging.DEBUG:
                 logger.debug(f"Processed file: {filepath.name}")
 
-    # Aggregate all geometries into GeoJSON files
-    if processed_metadata:
-        generate_geojson(processed_metadata)
+    geojson_metadata = collect_geojson_metadata(all_md_files)
+    geo_stats = generate_geojson(geojson_metadata)
 
-    # Summary
-    logger.info(f"✓ Processing complete: {success_count}/{len(md_files)} files processed")
+    logger.info(
+        f"Summary mode=all files={len(all_md_files)} posts_written={success_count} "
+        f"geo_ok={geo_stats['ok']} origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']}"
+    )
 
-    return success_count > 0
+    return success_count > 0 and bool(geo_stats["ok"])
 
 
 if __name__ == "__main__":
-    success = main()
-    exit(0 if success else 1)
+    result = main()
+    if isinstance(result, int):
+        exit(result)
+    exit(0 if result else 1)

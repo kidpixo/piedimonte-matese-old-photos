@@ -105,6 +105,27 @@ This monastery facade was... (Research text here)
 **Input**: `raw_data/*.md` + images  
 **Output**: `_photos/`, `assets/`, `assets/data/geojson.geojson`
 
+**Execution Modes (2026-03 update)**:
+- `python3 scripts/process_research.py` or `python3 scripts/process_research.py geo`
+  - GeoJSON only from full `raw_data/*.md` frontmatter scan
+- `python3 scripts/process_research.py all`
+  - Full pipeline: `_photos` generation + image processing + GeoJSON
+- `python3 scripts/process_research.py changed [--prune]`
+  - Incremental `_photos` generation from git-changed `raw_data/*.md`
+  - `--prune` removes stale `_photos/*.md` entries for deleted source files
+
+**Observability / Integrity Mode (2026-03 update)**:
+- `python3 scripts/process_research.py --check`
+  - Audits source/generated consistency and reports errors/warnings
+- `python3 scripts/process_research.py --check --json`
+  - Machine-readable audit output for CI pipelines
+- `python3 scripts/process_research.py --check --strict-warnings`
+  - Fails when warnings exist (Python returns `-1`; shell sees exit `255`)
+
+**Location Normalization Rule (2026-03 update)**:
+- `location` is normalized to a single dict (supports list-of-dicts input)
+- Geo key typo diagnostics include expected vs found keys and likely matches
+
 **Tasks**:
 1. Scan all `raw_data/*.md` files
 2. Validate YAML frontmatter (required fields + variants array if present)

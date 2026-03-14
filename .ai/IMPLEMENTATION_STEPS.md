@@ -12,6 +12,38 @@
 **Last Updated**: 2026-03-10 (Phase 3 fully complete—variants + GeoJSON overlays implemented)  
 **Blocker**: None
 
+### Update Log — 2026-03-14 (`scripts/process_research.py` hardening)
+
+**What changed**
+- Refactored execution into explicit modes:
+  - `geo` (default): GeoJSON-only build from all `raw_data/*.md`
+  - `all`: full `_photos` + image processing + GeoJSON
+  - `changed`: git-scoped incremental `_photos` build (`--prune` optional)
+- Decoupled GeoJSON metadata collection from `_photos` generation to avoid mode-coupling.
+- Added `photo_post_rel_url` in generated `photos_origin.geojson` properties.
+- Added defensive location normalization (`dict` or list-of-dicts) before validation and geometry extraction.
+- Improved typo diagnostics for location keys (missing/unknown keys + close-match suggestions).
+
+**Observability additions**
+- Added `--check` audit mode:
+  - enumerates all `raw_data/*.md`
+  - validates geo presence and image references
+  - reports missing generated `_photos/*.md`
+  - reports orphaned files in `raw_data/`, `_photos/`, `assets/images/`, `assets/thumbs/`
+- Added `--json` for machine-readable check output (CI-friendly).
+- Added `--strict-warnings` for CI failure on warnings.
+
+**Exit code contract**
+- `--check`: `0` (clean), `1` (errors), `2` (internal failure)
+- `--check --strict-warnings`: returns `-1` when warnings exist (shell observes `255`)
+
+**Validation executed**
+- Syntax validation: `python3 -m py_compile scripts/process_research.py`
+- Runtime validation:
+  - `python3 scripts/process_research.py --check`
+  - `python3 scripts/process_research.py --check --json`
+  - `python3 scripts/process_research.py --check --strict-warnings` (confirmed CI-fail behavior)
+
 ---
 
 ## Phase Checklist
