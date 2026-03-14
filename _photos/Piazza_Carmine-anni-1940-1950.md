@@ -22,6 +22,9 @@ images: &id001
   is_primary: true
 map:
   zoom: 20
+  activelayers:
+  - esri
+  - '1940'
   map_height: 600px
 date: 1945-01-01
 original_url: https://www.facebook.com/photo?fbid=2182583548421092

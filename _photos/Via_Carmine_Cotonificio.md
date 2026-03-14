@@ -33,7 +33,10 @@ images: &id001
   alt: Versione colorizzata della foto storica
   is_primary: false
 map:
-  zoom: 18
+  zoom: 20
+  activelayers:
+  - esri
+  - '1940'
   map_height: 500px
 date: 1945-01-01
 original_url: https://www.facebook.com/fotodiieriedioggiPiedimonte/photos/p.497984370998267/497984370998267/
