@@ -7,7 +7,7 @@ location:
     longitude_vertex_left: 14.37157426
     latitude_vertex_right: 41.35529720
     longitude_vertex_right: 14.37186353
-title: "Via Antonio Gaetani, Ponte Santa Lucia, Parata Legione Matese, circa 1910"
+title: "Parata Legione Matese, circa 1910"
 images:
   - file: "ViaAntonioGaetani_1910.jpg"
     type: "original"
@@ -28,8 +28,9 @@ map:
 date: 1910-01-01
 original_url: https://www.facebook.com/photo/?fbid=1145485440958391
 labels:
-    - "Ponte Santa Lucia"
-    - "parata"
+    - "ponte santa lucia"
+    - "via antonio gaetani"
+    - "legione matese"
 ---
 
 Questa splendida immagine restaurata cattura un momento di solenne celebrazione patriottica a Piedimonte Matese (all'epoca Piedimonte d'Alife) intorno al 1910. La scena si svolge lungo Via Antonio Gaetani, nei pressi del Ponte Santa Lucia, e documenta il passaggio della [Legione del Matese](https://it.wikipedia.org/wiki/Legione_del_Matese). Questo corpo volontario, nato nel 1860 per sostenere l'impresa garibaldina, rimase un simbolo identitario fortissimo per la città: la datazione della foto è supportata dal fatto che proprio nel 1909 la bandiera storica della Legione fu ufficialmente consegnata al Comune, innescando un rinnovato fervore celebrativo e pubblicazioni storiche (come quella di Giovanni Petella del 1910) che spiegano l'impeccabile parata in uniforme visibile nello scatto.

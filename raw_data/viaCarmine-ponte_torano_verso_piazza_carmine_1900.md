@@ -7,7 +7,7 @@ location:
     longitude_vertex_left: 14.37221629
     latitude_vertex_right: 41.35519581
     longitude_vertex_right: 14.37199924
-title: "Via Carmine ponte torano verso piazza Carmine circa 1900"
+title: "Via Carmine, Ingresso Cotonificio, inizio 1900"
 images:
   - file: "ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg"
     is_primary: true
@@ -29,8 +29,8 @@ date: 1900-01-01
 original_url: https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.179023658956988&idorvanity=174126156113405
 labels:
     - "piazza carmine"
-    - "ciminera"
     - "via carmine"
+    - "ponte santa lucia"
 ---
 
-Via Carmine ponte torano verso piazza Carmine circa 1900.
+Vista dell'ingresso del Cotonificio dal lato del Convento del Carmine, su Via Carmine dal Ponte di Santa Lucia, inizio del 1900.

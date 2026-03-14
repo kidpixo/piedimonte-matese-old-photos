@@ -32,6 +32,7 @@
   - reports orphaned files in `raw_data/`, `_photos/`, `assets/images/`, `assets/thumbs/`
 - Added `--json` for machine-readable check output (CI-friendly).
 - Added `--strict-warnings` for CI failure on warnings.
+- Added `--clean` (requires `--check`) to remove orphan files only after check output and interactive confirmation.
 
 **Exit code contract**
 - `--check`: `0` (clean), `1` (errors), `2` (internal failure)
@@ -43,6 +44,26 @@
   - `python3 scripts/process_research.py --check`
   - `python3 scripts/process_research.py --check --json`
   - `python3 scripts/process_research.py --check --strict-warnings` (confirmed CI-fail behavior)
+
+### Update Log — 2026-03-14 (`scripts/process_research.py` cleanup UX + short flags)
+
+**What changed (this chat)**
+- Added `--yes` to skip confirmation only in `--check --clean` flow.
+- Added short options for faster CLI use:
+  - `-l/-c/-C/-y/-j/-w` and `changed -p`.
+
+**How we implemented it**
+- Extended `run_check_mode(...)` with `auto_yes` and kept cleanup execution strictly after report generation.
+- Preserved safe behavior: interactive confirmation remains default for `--check --clean`.
+- Added argument guards to avoid unsafe or ambiguous combinations:
+  - `--clean` requires `--check`
+  - `--yes` requires both `--check` and `--clean`
+
+**Validation executed**
+- `python3 -m py_compile scripts/process_research.py`
+- `python3 scripts/process_research.py -h`
+- `python3 scripts/process_research.py -c -C -y`
+- `python3 scripts/process_research.py --check --yes` (expected guard error)
 
 ---
 

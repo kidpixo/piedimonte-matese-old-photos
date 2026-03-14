@@ -7,9 +7,14 @@ location:
     longitude_vertex_left: 14.37226942
     latitude_vertex_right: 41.35525257
     longitude_vertex_right: 14.37213319
-title: "Piazza Carmine, 1940-1950"
+title: "Convento del Carmine ruderi, 1940-1950"
 images:
   - file : "Piazza_Carmine-anni-1940-1950.jpg"
+    type: "original"
+    note: "Main historical shot"
+    alt: "Piazza_Carmine-anni-1940-1950"
+
+  - file : "Piazza_Carmine-anni-1940-1950-restored.jpg"
     is_primary: true
     type: "original"
     note: "Main historical shot"
@@ -23,8 +28,8 @@ date: 1945-01-01
 original_url: https://www.facebook.com/photo?fbid=2182583548421092
 labels:
     - "piazza carmine"
+    - "convento del carmine"
     - "cotonificio"
-    - "demolizione"
     - "commerci storici"
 ---
 

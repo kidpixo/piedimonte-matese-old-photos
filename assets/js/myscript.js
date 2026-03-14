@@ -46,7 +46,7 @@ const LAYER_CONFIG = {
         layerType: "tile",
         showInControl: true,
         extraOptions: { 
-            maxNativeZoom: 20, 
+            maxNativeZoom: 19, 
             maxZoom: 23 
         }
         },
@@ -235,17 +235,9 @@ const LAYER_CONFIG = {
                 color: "#e74c3c", // Red line
                 weight: 4,
                 opacity: 1
-            },            
-            // Usage in onEachFeature:
-            onEachFeature: function(feature, layer) {
-                if (layer instanceof L.Polyline) {
-                    layer.on("add", function() {
-                        requestAnimationFrame(() => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
-                    });
-                    layers.map.on("zoomend moveend", () => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
-                }
-                }
-            }    }
+            }
+            }
+        }
 };
 
 // Global object to store all map layers for easy access
@@ -962,54 +954,6 @@ async function addIndividualGeoJsonLayers() {
             console.error('Error adding photo line layer:', err);
         }
     }
-}
-
-// Utility: Add arrowhead to a Leaflet polyline
-function addArrowhead(layer, options = {}) {
-    const color = options.color || "#e74c3c";
-    const size = options.size || 15;
-    const map = layer._map;
-    if (!map) return;
-
-    const latlngsRaw = layer.getLatLngs();
-    const latlngs = Array.isArray(latlngsRaw[0]) ? latlngsRaw[0] : latlngsRaw;
-    if (!latlngs || latlngs.length < 2) return;
-
-    const prev = latlngs[latlngs.length - 2];
-    const last = latlngs[latlngs.length - 1];
-
-    const p1 = map.latLngToLayerPoint(prev);
-    const p2 = map.latLngToLayerPoint(last);
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-    const arrowLength = size;
-    const arrowWidth = size / 2;
-
-    const left = L.point(
-        p2.x - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle),
-        p2.y - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle)
-    );
-    const right = L.point(
-        p2.x - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle),
-        p2.y - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle)
-    );
-
-    const path = layer._path;
-    const svg = path?.ownerSVGElement;
-    if (!svg) {
-        console.warn("Arrowhead not drawn: SVG path not ready.");
-        return;
-    }
-
-    svg.querySelectorAll(`[data-arrowhead="${layer._leaflet_id}"]`).forEach((el) => el.remove());
-
-    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    arrow.setAttribute("points", `${p2.x},${p2.y} ${left.x},${left.y} ${right.x},${right.y}`);
-    arrow.setAttribute("fill", color);
-    arrow.setAttribute("stroke", color);
-    arrow.setAttribute("stroke-width", "1");
-    arrow.setAttribute("data-arrowhead", String(layer._leaflet_id));
-    svg.appendChild(arrow);
 }
 
 // Start everything: initialize map and add raster layers (async)

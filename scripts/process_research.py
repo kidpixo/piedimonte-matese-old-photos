@@ -826,7 +826,55 @@ def summarize_check_report(report: Dict, json_output: bool) -> None:
             logger.warning(msg)
 
 
-def run_check_mode(json_output: bool = False, strict_warnings: bool = False) -> int:
+def flatten_orphan_groups(orphan_groups: Dict[str, List[pathlib.Path]]) -> List[pathlib.Path]:
+    """Flatten and sort orphan files from all groups."""
+    all_paths: set[pathlib.Path] = set()
+    for paths in orphan_groups.values():
+        all_paths.update(paths)
+    return sorted(all_paths)
+
+
+def confirm_orphan_cleanup(total_files: int) -> bool:
+    """Prompt user to confirm orphan cleanup."""
+    if total_files <= 0:
+        return False
+
+    try:
+        answer = input(f"Found {total_files} orphan files. Delete them now? [y/N]: ").strip().lower()
+    except EOFError:
+        logger.warning("No interactive input available; skipping --clean")
+        return False
+
+    return answer in {"y", "yes"}
+
+
+def clean_orphan_files(orphan_groups: Dict[str, List[pathlib.Path]]) -> Dict[str, int]:
+    """Delete orphan files discovered during check mode."""
+    deleted = 0
+    failed = 0
+
+    for path in flatten_orphan_groups(orphan_groups):
+        try:
+            if path.exists() and path.is_file():
+                path.unlink()
+                deleted += 1
+                logger.info(f"Deleted orphan: {path.relative_to(PROJECT_ROOT)}")
+        except Exception as e:
+            failed += 1
+            logger.error(f"Failed deleting orphan {path}: {e}")
+
+    return {
+        "deleted": deleted,
+        "failed": failed,
+    }
+
+
+def run_check_mode(
+    json_output: bool = False,
+    strict_warnings: bool = False,
+    clean: bool = False,
+    auto_yes: bool = False,
+) -> int:
     """Run repository consistency checks.
 
     Exit codes:
@@ -954,7 +1002,29 @@ def run_check_mode(json_output: bool = False, strict_warnings: bool = False) -> 
                 f"Orphan generated thumb in assets/thumbs: {orphan.relative_to(PROJECT_ROOT)}"
             )
 
+        orphan_groups: Dict[str, List[pathlib.Path]] = {
+            "raw_images": orphan_raw_images,
+            "photos_markdown": [PHOTOS_OUTPUT_DIR / f"{slug}.md" for slug in orphan_photos_md],
+            "generated_images": orphan_generated_images,
+            "generated_thumbs": orphan_generated_thumbs,
+        }
+
         summarize_check_report(report, json_output=json_output)
+
+        if clean:
+            orphan_files = flatten_orphan_groups(orphan_groups)
+            if not orphan_files:
+                logger.info("--clean requested, but no orphan files were found")
+            elif not auto_yes and not confirm_orphan_cleanup(len(orphan_files)):
+                logger.info("--clean cancelled by user")
+            else:
+                if auto_yes:
+                    logger.info("--yes detected: skipping cleanup confirmation prompt")
+                cleanup_stats = clean_orphan_files(orphan_groups)
+                logger.info(
+                    f"Cleanup summary deleted={cleanup_stats['deleted']} failed={cleanup_stats['failed']}"
+                )
+
         if report["errors"]:
             return 1
         if strict_warnings and report["warnings"]:
@@ -1180,15 +1250,17 @@ def main():
     """Main processing pipeline - orchestrates the complete workflow."""
     import argparse
     parser = argparse.ArgumentParser(description="Process research photos and generate GeoJSON.")
-    parser.add_argument('--log', dest='loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level (default: INFO)')
-    parser.add_argument('--check', action='store_true', help='Run integrity checks across raw_data, _photos and generated assets')
-    parser.add_argument('--json', action='store_true', help='With --check, emit machine-readable JSON report')
-    parser.add_argument('--strict-warnings', action='store_true', help='With --check, treat warnings as failure (returns -1, shell exit 255)')
+    parser.add_argument('-l', '--log', dest='loglevel', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help='Set logging level (default: INFO)')
+    parser.add_argument('-c', '--check', action='store_true', help='Run integrity checks across raw_data, _photos and generated assets')
+    parser.add_argument('-C', '--clean', action='store_true', help='With --check, delete orphan files after a confirmation prompt')
+    parser.add_argument('-y', '--yes', action='store_true', help='With --check --clean, skip cleanup confirmation prompt')
+    parser.add_argument('-j', '--json', action='store_true', help='With --check, emit machine-readable JSON report')
+    parser.add_argument('-w', '--strict-warnings', action='store_true', help='With --check, treat warnings as failure (returns -1, shell exit 255)')
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("geo", help="Generate GeoJSON only from all raw_data/*.md")
     subparsers.add_parser("all", help="Process all raw_data/*.md to _photos and regenerate GeoJSON")
     changed_parser = subparsers.add_parser("changed", help="Process only git-changed raw_data/*.md to _photos")
-    changed_parser.add_argument("--prune", action="store_true", help="Remove stale _photos/*.md for deleted raw_data/*.md")
+    changed_parser.add_argument("-p", "--prune", action="store_true", help="Remove stale _photos/*.md for deleted raw_data/*.md")
     args = parser.parse_args()
 
     loglevel = getattr(logging, args.loglevel.upper(), logging.INFO)
@@ -1205,6 +1277,15 @@ def main():
     if args.strict_warnings and not args.check:
         parser.error("--strict-warnings can only be used together with --check")
 
+    if args.clean and not args.check:
+        parser.error("--clean can only be used together with --check")
+
+    if args.yes and not args.check:
+        parser.error("--yes can only be used together with --check")
+
+    if args.yes and not args.clean:
+        parser.error("--yes can only be used together with --clean")
+
     if args.check and args.command:
         parser.error("--check cannot be combined with subcommands (geo/all/changed)")
 
@@ -1214,7 +1295,12 @@ def main():
         return 2 if args.check else False
 
     if args.check:
-        return run_check_mode(json_output=bool(args.json), strict_warnings=bool(args.strict_warnings))
+        return run_check_mode(
+            json_output=bool(args.json),
+            strict_warnings=bool(args.strict_warnings),
+            clean=bool(args.clean),
+            auto_yes=bool(args.yes),
+        )
 
     # Find all markdown files to process
     all_md_files = sorted(RAW_DATA_DIR.glob("*.md"))

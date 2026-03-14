@@ -12,7 +12,7 @@ location:
     41.35529405], [14.37186353, 41.3552972], [14.37189422, 41.35523187]]]}'
   line_of_sight_geojson: '{"type": "LineString", "coordinates": [[14.37189422, 41.35523187],
     [14.371718895, 41.355295625]]}'
-title: Via Antonio Gaetani, Ponte Santa Lucia, Parata Legione Matese, circa 1910
+title: Parata Legione Matese, circa 1910
 images: &id001
 - file: assets/images/variants/ViaAntonioGaetani_1910/ViaAntonioGaetani_1910.jpg
   thumb: assets/thumbs/variants/ViaAntonioGaetani_1910/ViaAntonioGaetani_1910.jpg
@@ -35,8 +35,9 @@ map:
   map_height: 500px
 original_url: https://www.facebook.com/photo/?fbid=1145485440958391
 labels:
-- Ponte Santa Lucia
-- parata
+- ponte santa lucia
+- via antonio gaetani
+- legione matese
 processed_primary_image: assets/images/ViaAntonioGaetani_1910-main.jpg
 processed_primary_thumb: assets/thumbs/ViaAntonioGaetani_1910.jpg
 primary_image: ViaAntonioGaetani_1910-restored.jpg

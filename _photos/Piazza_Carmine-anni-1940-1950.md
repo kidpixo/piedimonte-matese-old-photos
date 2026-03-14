@@ -12,8 +12,14 @@ location:
     41.35535474], [14.37213319, 41.35525257], [14.37222674, 41.35539924]]]}'
   line_of_sight_geojson: '{"type": "LineString", "coordinates": [[14.37222674, 41.35539924],
     [14.372201305, 41.355303655]]}'
-title: Piazza Carmine, 1940-1950
+title: Convento del Carmine ruderi, 1940-1950
 images: &id001
+- file: assets/images/variants/Piazza_Carmine-anni-1940-1950/Piazza_Carmine-anni-1940-1950.jpg
+  thumb: assets/thumbs/variants/Piazza_Carmine-anni-1940-1950/Piazza_Carmine-anni-1940-1950.jpg
+  type: original
+  note: Main historical shot
+  alt: Piazza_Carmine-anni-1940-1950
+  is_primary: false
 - file: assets/images/Piazza_Carmine-anni-1940-1950-main.jpg
   thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950.jpg
   type: original
@@ -30,14 +36,19 @@ date: 1945-01-01
 original_url: https://www.facebook.com/photo?fbid=2182583548421092
 labels:
 - piazza carmine
+- convento del carmine
 - cotonificio
-- demolizione
 - commerci storici
 processed_primary_image: assets/images/Piazza_Carmine-anni-1940-1950-main.jpg
 processed_primary_thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950.jpg
-primary_image: Piazza_Carmine-anni-1940-1950.jpg
+primary_image: Piazza_Carmine-anni-1940-1950-restored.jpg
 processed_images: *id001
-variants: []
+variants:
+- file: assets/images/variants/Piazza_Carmine-anni-1940-1950/Piazza_Carmine-anni-1940-1950.jpg
+  thumb: assets/thumbs/variants/Piazza_Carmine-anni-1940-1950/Piazza_Carmine-anni-1940-1950.jpg
+  type: original
+  note: Main historical shot
+  alt: Piazza_Carmine-anni-1940-1950
 ---
 
 ### Memoria Urbana: Macerie Cotonifio e la Piazza Carmine degli anni '50

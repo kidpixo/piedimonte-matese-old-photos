@@ -7,15 +7,15 @@ location:
     longitude_vertex_left: 14.3721622
     latitude_vertex_right: 41.3544190
     longitude_vertex_right: 14.3716486
-title: "abatttimento ciminera cotonificio, 1972"
+title: "Ciminera cotonificio, abbattimento, 1972"
 
 images:
-  - file: "abatttimento_ciminera_1972.jpg"
+  - file: "abbattimento_ciminera_1972.jpg"
     type: "original"
-    note: "abatttimento ciminera cotonificio, 1972"
-    alt: "abatttimento_ciminera_1972"
+    note: "abbattimento ciminera cotonificio, 1972"
+    alt: "abbattimento_ciminera_1972"
 
-  - file: "abatttimento_ciminera_1972-restored.jpg"
+  - file: "abbattimento_ciminera_1972-restored.jpg"
     is_primary: true
     type: "restoration"
     note: "Noise-reduced version"
@@ -31,7 +31,7 @@ original_url: Null
 labels:
     - "piazza carmine"
     - "ciminera"
-    - 'abattimento'
+    - 'abbattimento'
 ---
 
-Questa foto document l'abattimento della Ciminiera del cotonificio nel 1972, con alcuni muri perimetrali ancora esistenti vicino al fiume e rustici dei nuovi edifici della scuola elementare.
+Questa foto documenta l'istande dell'abbattimento della Ciminiera del cotonificio nel 1972, con alcuni muri perimetrali ancora esistenti a ridosso al fiume e rustici dei nuovi edifici della scuola elementare.

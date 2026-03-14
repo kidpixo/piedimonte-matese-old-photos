@@ -112,7 +112,7 @@ This monastery facade was... (Research text here)
   - Full pipeline: `_photos` generation + image processing + GeoJSON
 - `python3 scripts/process_research.py changed [--prune]`
   - Incremental `_photos` generation from git-changed `raw_data/*.md`
-  - `--prune` removes stale `_photos/*.md` entries for deleted source files
+  - `--prune`/`-p` removes stale `_photos/*.md` entries for deleted source files
 
 **Observability / Integrity Mode (2026-03 update)**:
 - `python3 scripts/process_research.py --check`
@@ -121,6 +121,13 @@ This monastery facade was... (Research text here)
   - Machine-readable audit output for CI pipelines
 - `python3 scripts/process_research.py --check --strict-warnings`
   - Fails when warnings exist (Python returns `-1`; shell sees exit `255`)
+- `python3 scripts/process_research.py --check --clean`
+  - Runs integrity check first, then asks confirmation before deleting orphan files
+- `python3 scripts/process_research.py --check --clean --yes`
+  - Runs integrity check first, then deletes orphan files without confirmation
+
+**CLI Short Switches (2026-03 update)**:
+- `-l` (`--log`), `-c` (`--check`), `-C` (`--clean`), `-y` (`--yes`), `-j` (`--json`), `-w` (`--strict-warnings`), `-p` (`changed --prune`)
 
 **Location Normalization Rule (2026-03 update)**:
 - `location` is normalized to a single dict (supports list-of-dicts input)
