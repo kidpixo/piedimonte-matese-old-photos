@@ -4,7 +4,7 @@ layout: default
 
 <!-- DataTables (Bootstrap 5 integration, no jQuery required) -->
 <link rel="stylesheet" href="{{ site.cdn_libs.datatables_css }}">
-<link rel="stylesheet" href="/assets/css/overwrite_bootstrap.css">
+<link href="{{ '/assets/css/overwrite_bootstrap.css' | relative_url }}" rel="stylesheet"/>
 <script src="{{ site.cdn_libs.jquery }}"></script>
 <script src="{{ site.cdn_libs.datatables_js }}"></script>
 <script src="{{ site.cdn_libs.datatables_bs5_js }}"></script>
