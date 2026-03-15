@@ -21,8 +21,8 @@ images: &id001
   alt: Piazza Carmine,processione dal Ponte S.Lucia verso ruderi Cotonificio,anni
     60
   is_primary: false
-- file: assets/images/piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60-main.jpg
-  thumb: assets/thumbs/piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60.jpg
+- file: assets/images/PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg
+  thumb: assets/thumbs/PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg
   type: restoration
   note: restored version
   alt: Piazza Carmine,processione dal Ponte S.Lucia verso ruderi Cotonificio,anni
@@ -40,8 +40,8 @@ labels:
 - piazza carmine
 - convento carmine
 - via carmine
-processed_primary_image: assets/images/piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60-main.jpg
-processed_primary_thumb: assets/thumbs/piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60.jpg
+processed_primary_image: assets/images/PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg
+processed_primary_thumb: assets/thumbs/PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg
 primary_image: PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg
 processed_images: *id001
 variants:

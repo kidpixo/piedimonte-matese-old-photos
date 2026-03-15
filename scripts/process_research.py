@@ -549,8 +549,8 @@ def process_images(slug: str, metadata: Dict) -> bool:
         is_primary = idx == primary_index
 
         if is_primary:
-            optimized_path = IMAGES_DIR / f"{slug}-main.jpg"
-            thumb_path = THUMBS_DIR / f"{slug}.jpg"
+            optimized_path = IMAGES_DIR / image_name
+            thumb_path = THUMBS_DIR / image_name
         else:
             optimized_path = VARIANTS_DIR / slug / image_name
             thumb_path = VARIANTS_THUMBS_DIR / slug / image_name
@@ -787,8 +787,8 @@ def expected_generated_assets(slug: str, metadata: Dict) -> Tuple[set[pathlib.Pa
         image_name = pathlib.Path(image_obj.get("file", "")).name
         is_primary = idx == primary_index
         if is_primary:
-            expected_images.add((IMAGES_DIR / f"{slug}-main.jpg").resolve())
-            expected_thumbs.add((THUMBS_DIR / f"{slug}.jpg").resolve())
+            expected_images.add((IMAGES_DIR / image_name).resolve())
+            expected_thumbs.add((THUMBS_DIR / image_name).resolve())
         else:
             expected_images.add((VARIANTS_DIR / slug / image_name).resolve())
             expected_thumbs.add((VARIANTS_THUMBS_DIR / slug / image_name).resolve())
@@ -1088,7 +1088,9 @@ def generate_geojson(all_metadata: List[Dict]) -> Dict[str, Any]:
         for metadata in all_metadata:
             # Determine filename/slug
             slug = metadata.get('slug') if metadata.get('slug') else metadata.get('title', '')
-            photo_post_rel_url = derive_photo_post_rel_url(metadata)
+            jekyll_slug = jekyll_slugify(slug)
+            photo_post_rel_url = f"/photos/{jekyll_slug}/"
+            permalink = photo_post_rel_url
             # Try to get primary image filename
             filename = ''
             images = metadata.get('images')
@@ -1106,6 +1108,7 @@ def generate_geojson(all_metadata: List[Dict]) -> Dict[str, Any]:
                     "labels": ",".join(metadata.get("labels", [])),
                     "filename": filename,
                     "photo_post_rel_url": photo_post_rel_url,
+                    "permalink": permalink,
                     "text": metadata.get("title", ""),
                     "geometry": metadata["_origin"],
                 })

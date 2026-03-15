@@ -20,8 +20,8 @@ images: &id001
   note: Main historical shot
   alt: ViaAntonioGaetani_1910
   is_primary: false
-- file: assets/images/ViaAntonioGaetani_1910-main.jpg
-  thumb: assets/thumbs/ViaAntonioGaetani_1910.jpg
+- file: assets/images/ViaAntonioGaetani_1910-restored.jpg
+  thumb: assets/thumbs/ViaAntonioGaetani_1910-restored.jpg
   type: restoration
   note: restored version
   alt: Versione restaurata dellastessa scena
@@ -38,8 +38,8 @@ labels:
 - ponte santa lucia
 - via antonio gaetani
 - legione matese
-processed_primary_image: assets/images/ViaAntonioGaetani_1910-main.jpg
-processed_primary_thumb: assets/thumbs/ViaAntonioGaetani_1910.jpg
+processed_primary_image: assets/images/ViaAntonioGaetani_1910-restored.jpg
+processed_primary_thumb: assets/thumbs/ViaAntonioGaetani_1910-restored.jpg
 primary_image: ViaAntonioGaetani_1910-restored.jpg
 processed_images: *id001
 variants:

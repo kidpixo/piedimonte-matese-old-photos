@@ -10,12 +10,12 @@ location:
 title: "Via_Carmine_Cotonificio"
 images:
   - file: "Via_Carmine_Cotonificio.jpg"
-    is_primary: true
     type: "original"
     note: "Main historical shot"
     alt: "Facciata del cotonificio in Via Carmine"
 
   - file: "Via_Carmine_Cotonificio_denoise.jpg"
+    is_primary: true
     type: "restoration"
     note: "Noise-reduced version"
     alt: "Versione denoise della stessa scena"

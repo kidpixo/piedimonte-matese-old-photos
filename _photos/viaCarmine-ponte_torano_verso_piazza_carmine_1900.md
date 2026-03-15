@@ -14,8 +14,8 @@ location:
     [14.372107764999999, 41.35527028]]}'
 title: Via Carmine, Ingresso Cotonificio, inizio 1900
 images: &id001
-- file: assets/images/viaCarmine-ponte_torano_verso_piazza_carmine_1900-main.jpg
-  thumb: assets/thumbs/viaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
+- file: assets/images/ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
+  thumb: assets/thumbs/ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
   type: original
   note: Main historical shot
   alt: ViaCarmine-ponte_torano_verso_piazza_carmine_1900
@@ -38,8 +38,8 @@ labels:
 - piazza carmine
 - via carmine
 - ponte santa lucia
-processed_primary_image: assets/images/viaCarmine-ponte_torano_verso_piazza_carmine_1900-main.jpg
-processed_primary_thumb: assets/thumbs/viaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
+processed_primary_image: assets/images/ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
+processed_primary_thumb: assets/thumbs/ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
 primary_image: ViaCarmine-ponte_torano_verso_piazza_carmine_1900.jpg
 processed_images: *id001
 variants:

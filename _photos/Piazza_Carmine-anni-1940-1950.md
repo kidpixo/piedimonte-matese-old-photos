@@ -20,8 +20,8 @@ images: &id001
   note: Main historical shot
   alt: Piazza_Carmine-anni-1940-1950
   is_primary: false
-- file: assets/images/Piazza_Carmine-anni-1940-1950-main.jpg
-  thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950.jpg
+- file: assets/images/Piazza_Carmine-anni-1940-1950-restored.jpg
+  thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950-restored.jpg
   type: original
   note: Main historical shot
   alt: Piazza_Carmine-anni-1940-1950
@@ -39,8 +39,8 @@ labels:
 - convento del carmine
 - cotonificio
 - commerci storici
-processed_primary_image: assets/images/Piazza_Carmine-anni-1940-1950-main.jpg
-processed_primary_thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950.jpg
+processed_primary_image: assets/images/Piazza_Carmine-anni-1940-1950-restored.jpg
+processed_primary_thumb: assets/thumbs/Piazza_Carmine-anni-1940-1950-restored.jpg
 primary_image: Piazza_Carmine-anni-1940-1950-restored.jpg
 processed_images: *id001
 variants:

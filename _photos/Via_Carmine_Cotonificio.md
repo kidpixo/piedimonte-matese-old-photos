@@ -14,18 +14,18 @@ location:
     [14.372310055, 41.35535557]]}'
 title: Via_Carmine_Cotonificio
 images: &id001
-- file: assets/images/Via_Carmine_Cotonificio-main.jpg
-  thumb: assets/thumbs/Via_Carmine_Cotonificio.jpg
+- file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio.jpg
+  thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio.jpg
   type: original
   note: Main historical shot
   alt: Facciata del cotonificio in Via Carmine
-  is_primary: true
-- file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_denoise.jpg
-  thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_denoise.jpg
+  is_primary: false
+- file: assets/images/Via_Carmine_Cotonificio_denoise.jpg
+  thumb: assets/thumbs/Via_Carmine_Cotonificio_denoise.jpg
   type: restoration
   note: Noise-reduced version
   alt: Versione denoise della stessa scena
-  is_primary: false
+  is_primary: true
 - file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_colorized.jpg
   thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_colorized.jpg
   type: colorized
@@ -45,16 +45,16 @@ labels:
 - cotonificio
 - convento carmine
 - commerci storici
-processed_primary_image: assets/images/Via_Carmine_Cotonificio-main.jpg
-processed_primary_thumb: assets/thumbs/Via_Carmine_Cotonificio.jpg
-primary_image: Via_Carmine_Cotonificio.jpg
+processed_primary_image: assets/images/Via_Carmine_Cotonificio_denoise.jpg
+processed_primary_thumb: assets/thumbs/Via_Carmine_Cotonificio_denoise.jpg
+primary_image: Via_Carmine_Cotonificio_denoise.jpg
 processed_images: *id001
 variants:
-- file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_denoise.jpg
-  thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_denoise.jpg
-  type: restoration
-  note: Noise-reduced version
-  alt: Versione denoise della stessa scena
+- file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio.jpg
+  thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio.jpg
+  type: original
+  note: Main historical shot
+  alt: Facciata del cotonificio in Via Carmine
 - file: assets/images/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_colorized.jpg
   thumb: assets/thumbs/variants/Via_Carmine_Cotonificio/Via_Carmine_Cotonificio_colorized.jpg
   type: colorized

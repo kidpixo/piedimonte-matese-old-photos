@@ -14,7 +14,7 @@ location:
     [14.37206115, 41.35446555]]}'
 title: piazzacarmine con ciminiera
 images: &id001
-- file: assets/images/piazzacarmine_con_ciminiera-main.jpg
+- file: assets/images/piazzacarmine_con_ciminiera.jpg
   thumb: assets/thumbs/piazzacarmine_con_ciminiera.jpg
   type: original
   note: piazzacarmine_con_ciminiera
@@ -42,7 +42,7 @@ original_url: https://www.facebook.com/photo/?fbid=10200824960167695&set=gm.1790
 labels:
 - piazza carmine
 - ciminera
-processed_primary_image: assets/images/piazzacarmine_con_ciminiera-main.jpg
+processed_primary_image: assets/images/piazzacarmine_con_ciminiera.jpg
 processed_primary_thumb: assets/thumbs/piazzacarmine_con_ciminiera.jpg
 primary_image: piazzacarmine_con_ciminiera.jpg
 processed_images: *id001

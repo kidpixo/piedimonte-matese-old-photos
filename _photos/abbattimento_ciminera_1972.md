@@ -20,8 +20,8 @@ images: &id001
   note: abbattimento ciminera cotonificio, 1972
   alt: abbattimento_ciminera_1972
   is_primary: false
-- file: assets/images/abbattimento_ciminera_1972-main.jpg
-  thumb: assets/thumbs/abbattimento_ciminera_1972.jpg
+- file: assets/images/abbattimento_ciminera_1972-restored.jpg
+  thumb: assets/thumbs/abbattimento_ciminera_1972-restored.jpg
   type: restoration
   note: Noise-reduced version
   alt: Versione denoise della stessa scena
@@ -37,8 +37,8 @@ labels:
 - piazza carmine
 - ciminera
 - abbattimento
-processed_primary_image: assets/images/abbattimento_ciminera_1972-main.jpg
-processed_primary_thumb: assets/thumbs/abbattimento_ciminera_1972.jpg
+processed_primary_image: assets/images/abbattimento_ciminera_1972-restored.jpg
+processed_primary_thumb: assets/thumbs/abbattimento_ciminera_1972-restored.jpg
 primary_image: abbattimento_ciminera_1972-restored.jpg
 processed_images: *id001
 variants:

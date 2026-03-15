@@ -486,11 +486,12 @@ async function addPhotoLayers() {
                         if (props.text && props.filename) {
                             const text = String(props.text).replace(/['"]+/g, "");
                             const filename = String(props.filename);
-                            const photo_post_rel_url = String(props.photo_post_rel_url);
-                            const popupContent = `<div><h2>${text}</h2><a href="${SITE_BASE.href}${photo_post_rel_url}" target="_blank" rel="noopener noreferrer">original` +
+                            const permalink = String(props.permalink || props.photo_post_rel_url || "");
+                            const linkUrl = SITE_BASE.origin + permalink;
+                            const popupContent = `<div><b>${text}</b><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">` +
                                 (filename.includes(".webm")
                                     ? `<video controls id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}"></video>`
-                                    : `<img id="markers_popup_photos" src="${SITE_BASE.href}${filename}" alt="${filename}">`) +
+                                    : `<img id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}">`) +
                                 "</a></div>";
                             layer.bindPopup(popupContent, { maxWidth: "auto" });
                         }
@@ -565,7 +566,10 @@ function createTimelineSlider() {
             // Slider content container
             const sliderContainer = L.DomUtil.create('div', 'w-100 px-4 pb-2', collapsibleControl);
             sliderContainer.id = 'timeline-slider-container';
-            sliderContainer.style.display = 'flex';
+            sliderContainer.style.display = 'none'; // start collapsed
+            collapsibleControl.style.background = 'none';
+            collapsibleControl.style.border = 'none';
+            collapsibleControl.style.marginBottom = '48px'; // raise when collapsed
             sliderContainer.style.flexDirection = 'column';
             sliderContainer.style.justifyContent = 'center';
             sliderContainer.style.alignItems = 'center';
@@ -659,9 +663,8 @@ function createTimelineSlider() {
             toggleBtn.href = '#';
             toggleBtn.setAttribute('role', 'button');
             toggleBtn.setAttribute('aria-label', 'Toggle timeline controls');
-            toggleBtn.title = 'Collapse timeline controls';
-            toggleBtn.innerHTML = '«'; // fixed icon, state via title/aria
-;
+            toggleBtn.title = 'Expand timeline controls';
+            toggleBtn.innerHTML = '◷'; // collapsed icon
             collapsibleControl.insertBefore(toggleBtn, sliderContainer);
 
             function applyTimelineOpacity(val) {
@@ -814,7 +817,7 @@ function createTimelineSlider() {
             });
 
             // Toggle collapse/expand state
-            let collapsed = false;
+            let collapsed = true;
             L.DomEvent.on(toggleBtn, 'click', function(e) {
                 L.DomEvent.preventDefault(e);
                 collapsed = !collapsed;
@@ -822,10 +825,16 @@ function createTimelineSlider() {
                     sliderContainer.style.display = 'none';
                     collapsibleControl.style.width = 'auto';
                     collapsibleControl.style.justifyContent = 'flex-start';
+                    collapsibleControl.style.background = 'none';
+                    collapsibleControl.style.border = 'none';
+                    collapsibleControl.style.marginBottom = '48px'; // raise when collapsed
                 } else {
                     sliderContainer.style.display = 'flex';
                     collapsibleControl.style.width = expandedWidth;
                     collapsibleControl.style.justifyContent = '';
+                    collapsibleControl.style.background = 'rgba(255,255,255,0.3)';
+                    collapsibleControl.style.border = '1px solid #bbb';
+                    collapsibleControl.style.marginBottom = '12px'; // default when expanded
                 }
                 toggleBtn.innerHTML = collapsed ? '◷' : '«';
                 toggleBtn.title = collapsed ? 'Expand timeline controls' : 'Collapse timeline controls';
