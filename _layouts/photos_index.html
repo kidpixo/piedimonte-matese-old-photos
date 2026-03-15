@@ -15,7 +15,13 @@ layout: default
 
   <div class="d-flex justify-content-between align-items-center mb-2">
     <small class="text-muted">{{ site.photos.size }} foto totali</small>
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" id="view-switch" aria-label="Attiva vista griglia immagini">
+      <label class="form-check-label" for="view-switch">Vista griglia</label>
+    </div>
   </div>
+
+  <div id="photos-grid" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-2 mb-3 d-none" aria-live="polite"></div>
 
   <table id="photos-table" class="table table-striped table-hover table-sm align-middle" style="width:100%">
     <thead>
@@ -70,54 +76,4 @@ layout: default
   </table>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Pre-filter from URL ?label=slug
-    const params = new URLSearchParams(window.location.search);
-    const prefilter = params.get('label') || '';
-
-    const dtOptions = {
-      order: [[2, 'desc']],        // default: sort by year descending
-      ordering: true,
-      searching: true,
-      paging: true,
-      info: true,
-      lengthChange: true,
-      pageLength: 25,
-      lengthMenu: [10, 25, 50, 100],
-      dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
-      columnDefs: [
-        { orderable: false, searchable: false, targets: [0] }
-      ],
-      language: {
-        search:        'Cerca:',
-        lengthMenu:    'Mostra _MENU_ foto',
-        info:          'Da _START_ a _END_ di _TOTAL_ foto',
-        infoEmpty:     'Nessuna foto trovata',
-        infoFiltered:  '(filtrate da _MAX_ totali)',
-        paginate: {
-          first:    'Prima',
-          last:     'Ultima',
-          next:     'Avanti',
-          previous: 'Indietro'
-        },
-        zeroRecords: 'Nessuna corrispondenza trovata'
-      }
-    };
-
-    let table = null;
-    if (typeof DataTable !== 'undefined') {
-      table = new DataTable('#photos-table', dtOptions);
-    } else if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
-      table = jQuery('#photos-table').DataTable(dtOptions);
-    } else {
-      console.error('DataTables is not loaded. Check cdn_libs.jquery/datatables_js/datatables_bs5_js.');
-      return;
-    }
-
-    // Apply URL pre-filter after init
-    if (prefilter) {
-      table.search(prefilter.replace(/-/g, ' ')).draw();
-    }
-  });
-</script>
+<script src="{{ '/assets/js/photos-index.js' | relative_url }}"></script>

@@ -180,6 +180,8 @@ This monastery facade was... (Research text here)
 - **`/labels/`** - Photos filtered by label with label selector badges and slug-based pre-filtering  
 - **URL parameters** - `?label=slug` on `/photos/` and `?tag=slug` on `/labels/` for deep linking
 
+Additional UI: `/photos/` now provides a user-controlled toggle between the classic DataTables row view and a responsive Bootstrap image grid. The grid is rendered client-side from the current DataTables result set (page + search + order) so DataTables controls (search, pagination, ordering, page-length) continue to apply. The behavior is implemented in `assets/js/photos-index.js` and the grid view state is deep-linkable via `?view=grid`.
+
 ### DataTables Controls (All Layouts)
 - Sortable columns (Mappa column now sortable)
 - Global text search across photo titles and descriptions

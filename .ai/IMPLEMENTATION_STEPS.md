@@ -65,6 +65,59 @@
 - `python3 scripts/process_research.py -c -C -y`
 - `python3 scripts/process_research.py --check --yes` (expected guard error)
 
+### Update Log — 2026-03-15 (`_layouts/photos_index.html` table/grid hybrid)
+
+**What changed**
+- Added a view switch on `/photos/` to toggle between DataTable rows and image-only Bootstrap grid.
+- Kept DataTables as the single data engine (search, pagination, ordering, page length, info).
+- Implemented grid rendering from current DataTables state (`page + search + order`) so controls keep working in grid mode.
+- Added URL state sync for deep-linking view mode (`?view=grid`), preserving existing query params.
+
+**Technical notes**
+- Works with both DataTables constructor styles already used in project:
+  - `new DataTable(...)`
+  - jQuery plugin fallback `jQuery(...).DataTable(...)`
+- Added defensive fallback with explicit console error when DataTables scripts are unavailable.
+- Grid cards clone the linked thumbnail from table rows and preserve accessible labels.
+
+**Validation executed**
+- Editor diagnostics check on `_layouts/photos_index.html`: no errors reported.
+
+### Update Log — 2026-03-15 (`assets/js/photos-index.js` extraction)
+
+**What changed**
+- Moved custom `/photos/` page behavior out of inline `<script>` into dedicated asset file: `assets/js/photos-index.js`.
+- Replaced inline script in `_layouts/photos_index.html` with one external include:
+  - `<script src="{{ '/assets/js/photos-index.js' | relative_url }}"></script>`
+
+**Why**
+- Keeps layout template focused on markup/Liquid and centralizes custom logic in reusable static assets.
+- Improves maintainability while preserving current CDN-only architecture and client-side behavior.
+
+**Validation executed**
+- Editor diagnostics check on `_layouts/photos_index.html` and `assets/js/photos-index.js`: no errors reported.
+
+### Short Summary — 2026-03-15 (photos grid + assetization)
+
+What we changed:
+- Added a client-side grid toggle to `/photos/` that mirrors DataTables results into a responsive Bootstrap grid.
+- Implemented a map badge overlay for images with map coordinates (reuses the same SVG used in the sidebar).
+- Extracted the inline page script into `assets/js/photos-index.js` and replaced inline code with a single script include in `_layouts/photos_index.html`.
+
+How we implemented it:
+1. Kept DataTables as the canonical data engine; initialized it from `assets/js/photos-index.js` (supports both `new DataTable(...)` and `jQuery(...).DataTable(...)` patterns).
+2. On every DataTables `draw` event we rebuild the grid from the current result set (`page: 'current', search: 'applied', order: 'applied'`).
+3. The grid cards clone the table thumbnail and add a `position-absolute` SVG badge when the row's Map column contains a marker (✓).
+4. The view toggle state is synchronized to the URL via `?view=grid` for deep-linking and preserved alongside existing params like `label`.
+5. Added defensive checks and console errors when DataTables or required DOM elements are unavailable.
+
+Files touched:
+- `_layouts/photos_index.html` (add toggle/grid container + include of `assets/js/photos-index.js`)
+- `assets/js/photos-index.js` (new file)
+
+Why:
+- Keeps DataTables controls (filtering/pagination) while offering a visual grid. Externalizing JS improves maintainability and aligns with the project's CDN-only/static asset constraints.
+
 ---
 
 ## Phase Checklist
