@@ -174,16 +174,7 @@ const LAYER_CONFIG = {
                 color: "#e74c3c", // Red line
                 weight: 4,
                 opacity: 1
-            },            
-            // Usage in onEachFeature:
-            onEachFeature: function(feature, layer) {
-                if (layer instanceof L.Polyline) {
-                    layer.on("add", function() {
-                        requestAnimationFrame(() => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
-                    });
-                    layers.map.on("zoomend moveend", () => addArrowhead(layer, { color: "#e74c3c", size: 10 }));
-                }
-                }
+            }
             }
     },
     // Add more as needed, or comment out to disable
@@ -306,6 +297,8 @@ function createMap() {
         preferCanvas: false,
     });
     L.control.locate().addTo(layers.map); // Add geolocate user button
+
+    layers.map.addControl(new L.Control.Fullscreen());
 
     // Add right-click context menu to show coordinates in a popup
     layers.map.on("contextmenu", function (event) {
