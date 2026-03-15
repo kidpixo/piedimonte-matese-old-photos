@@ -182,6 +182,13 @@ This monastery facade was... (Research text here)
 
 Additional UI: `/photos/` now provides a user-controlled toggle between the classic DataTables row view and a responsive Bootstrap image grid. The grid is rendered client-side from the current DataTables result set (page + search + order) so DataTables controls (search, pagination, ordering, page-length) continue to apply. The behavior is implemented in `assets/js/photos-index.js` and the grid view state is deep-linkable via `?view=grid`.
 
+Chat session (2026-03-15) — short summary:
+- Persistent caption under each thumbnail (single-line truncation + title tooltip).
+- Removed hover overlay to simplify UX and searchability.
+- Small top-right badges overlay showing year + map icon for photos with coordinates.
+- Externalized page JS to `assets/js/photos-index.js`; CSS tweaks in `assets/css/overwrite_bootstrap.css`.
+- DataTables controls remain visible in grid mode; view state sync via `?view=grid`.
+
 ### DataTables Controls (All Layouts)
 - Sortable columns (Mappa column now sortable)
 - Global text search across photo titles and descriptions

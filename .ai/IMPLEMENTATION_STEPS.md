@@ -97,6 +97,16 @@
 **Validation executed**
 - Editor diagnostics check on `_layouts/photos_index.html` and `assets/js/photos-index.js`: no errors reported.
 
+### Chat refinements — 2026-03-15 (final)
+
+- Replaced hover overlay with persistent single-line captions under thumbnails to improve scanability and avoid duplicated information.
+- Added keyboard focus styling and ensured anchors remain accessible; included visually-hidden map hint for screen readers.
+- Introduced compact top-right badges with year + map icon for tiles that have coordinates; badges styled to match icon height.
+- Kept DataTables toolbar and pagination visible in grid mode by hiding only the `tbody`; added `#clear-filters` button and live counts (`#photos-count`).
+- Externalized JS to `assets/js/photos-index.js` and added CSS rules in `assets/css/overwrite_bootstrap.css`.
+
+Status: all changes implemented and validated locally (editor diagnostics). See files changed section above for file list.
+
 ### Short Summary — 2026-03-15 (photos grid + assetization)
 
 What we changed:
