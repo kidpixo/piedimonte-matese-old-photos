@@ -14,10 +14,13 @@ layout: default
   {{ content }}
 
   <div class="d-flex justify-content-between align-items-center mb-2">
-    <small class="text-muted">{{ site.photos.size }} foto totali</small>
-    <div class="form-check form-switch m-0">
-      <input class="form-check-input" type="checkbox" id="view-switch" aria-label="Attiva vista griglia immagini">
-      <label class="form-check-label" for="view-switch">Vista griglia</label>
+    <small id="photos-count" class="text-muted">{{ site.photos.size }} foto</small>
+    <div class="d-flex align-items-center gap-2">
+      <button id="clear-filters" type="button" class="btn btn-sm btn-outline-secondary" aria-label="Cancella filtri">Cancella filtri</button>
+      <div class="form-check form-switch m-0">
+        <input class="form-check-input" type="checkbox" id="view-switch" aria-label="Attiva vista griglia immagini">
+        <label class="form-check-label" for="view-switch">Vista griglia</label>
+      </div>
     </div>
   </div>
 
