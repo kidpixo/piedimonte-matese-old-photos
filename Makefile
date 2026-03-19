@@ -39,6 +39,9 @@ clean: ## Stop containers and remove volumes
 rebuild: ## Rebuild Docker image from scratch
 	podman-compose build --no-cache
 
+pytest: ## Run pytest and branches - if pytest-cov installed, coverage will popup
+	python -m pytest --cov=scripts.process_research --cov-branch
+
 #################################################################################
 # Self Documenting Commands                                                     #
 

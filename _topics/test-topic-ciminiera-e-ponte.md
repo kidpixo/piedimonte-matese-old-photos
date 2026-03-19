@@ -7,6 +7,10 @@ featured_photos:
     commentary: "Veduta della piazza con la ciminiera; utile per testare il collegamento col dataset foto."
   - id: viaCarmine-ponte_torano_verso_piazza_carmine_1900
     commentary: "Percorso storico verso Piazza Carmine; verifica rendering e link al dettaglio."
+  - id: Via_Carmine_Cotonificio
+    commentary : "Vista su Via Carmine e ruderi Cotonificio, ex Convento"
+map:
+  map_height: 500px
 ---
 
 Questo e un topic di prova per verificare che la collezione `topics` mostri correttamente i collegamenti alle foto.

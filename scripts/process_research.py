@@ -42,6 +42,8 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 IMAGES_DIR = ASSETS_DIR / "images"
 THUMBS_DIR = ASSETS_DIR / "thumbs"
 MAPS_DATA_DIR = ASSETS_DIR / "maps_data"
+TOPICS_DIR = PROJECT_ROOT / "_topics"
+TOPIC_MAPS_DIR = MAPS_DATA_DIR / "topics"
 VARIANTS_DIR = IMAGES_DIR / "variants"
 VARIANTS_THUMBS_DIR = THUMBS_DIR / "variants"
 
@@ -805,6 +807,9 @@ def summarize_check_report(report: Dict, json_output: bool) -> None:
     logger.info(f"raw_md_files={report['stats']['raw_md_files']}")
     logger.info(f"raw_images={report['stats']['raw_images']}")
     logger.info(f"photos_md_files={report['stats']['photos_md_files']}")
+    logger.info(f"topics_md_files={report['stats']['topics_md_files']}")
+    logger.info(f"topics_with_featured={report['stats']['topics_with_featured']}")
+    logger.info(f"expected_topic_geojson_files={report['stats']['expected_topic_geojson_files']}")
     logger.info(f"expected_generated_images={report['stats']['expected_generated_images']}")
     logger.info(f"expected_generated_thumbs={report['stats']['expected_generated_thumbs']}")
     logger.info(f"errors={len(report['errors'])} warnings={len(report['warnings'])}")
@@ -824,6 +829,95 @@ def summarize_check_report(report: Dict, json_output: bool) -> None:
         logger.warning("-- Warnings --")
         for msg in report["warnings"]:
             logger.warning(msg)
+
+
+def expected_topic_geojson_files(topic_slug: str) -> List[pathlib.Path]:
+    """Return expected topic-scoped geojson output files for a topic slug."""
+    topic_dir = TOPIC_MAPS_DIR / topic_slug
+    return [
+        topic_dir / "origin.geojson",
+        topic_dir / "fov.geojson",
+        topic_dir / "lov.geojson",
+    ]
+
+
+def audit_topics_for_check(raw_slugs: set, photos_slugs: set) -> Dict[str, Any]:
+    """Audit topic featured photo references and expected topic GeoJSON outputs."""
+    results: Dict[str, Any] = {
+        "topics_md_files": 0,
+        "topics_with_featured": 0,
+        "expected_topic_files": set(),
+        "errors": [],
+        "warnings": [],
+    }
+
+    if not TOPICS_DIR.exists():
+        return results
+
+    topic_files = sorted(TOPICS_DIR.glob("*.md"))
+    results["topics_md_files"] = len(topic_files)
+
+    for topic_path in topic_files:
+        try:
+            with open(topic_path, "r", encoding="utf-8") as f:
+                post = frontmatter.load(f)
+        except Exception as e:
+            results["errors"].append(f"{topic_path.name}: failed to read frontmatter: {e}")
+            continue
+
+        featured = post.metadata.get("featured_photos")
+        if featured is None:
+            continue
+
+        if not isinstance(featured, list):
+            results["errors"].append(
+                f"{topic_path.name}: 'featured_photos' must be a list of objects with an 'id' key"
+            )
+            continue
+
+        if not featured:
+            results["warnings"].append(
+                f"{topic_path.name}: 'featured_photos' is empty; topic-specific map files are not expected"
+            )
+            continue
+
+        topic_slug = topic_path.stem
+        valid_featured_ids: List[str] = []
+        for idx, item in enumerate(featured, start=1):
+            if not isinstance(item, dict):
+                results["errors"].append(
+                    f"{topic_path.name}: featured_photos[{idx}] must be an object with key 'id'"
+                )
+                continue
+            featured_id = item.get("id")
+            if not featured_id:
+                results["errors"].append(
+                    f"{topic_path.name}: featured_photos[{idx}] missing required key: id"
+                )
+                continue
+
+            featured_id = str(featured_id)
+            valid_featured_ids.append(featured_id)
+
+            if featured_id not in raw_slugs:
+                results["errors"].append(
+                    f"{topic_path.name}: featured photo id '{featured_id}' not found in raw_data/*.md"
+                )
+            elif featured_id not in photos_slugs:
+                results["warnings"].append(
+                    f"{topic_path.name}: featured photo id '{featured_id}' has no generated _photos markdown yet"
+                )
+
+        if valid_featured_ids:
+            results["topics_with_featured"] += 1
+            for expected_file in expected_topic_geojson_files(topic_slug):
+                results["expected_topic_files"].add(expected_file.resolve())
+                if not expected_file.exists():
+                    results["warnings"].append(
+                        f"Missing topic GeoJSON (runtime fallback will be used): {expected_file.relative_to(PROJECT_ROOT)}"
+                    )
+
+    return results
 
 
 def flatten_orphan_groups(orphan_groups: Dict[str, List[pathlib.Path]]) -> List[pathlib.Path]:
@@ -898,6 +992,9 @@ def run_check_mode(
                 "raw_md_files": len(raw_md_files),
                 "raw_images": 0,
                 "photos_md_files": len(photos_md_files),
+                "topics_md_files": 0,
+                "topics_with_featured": 0,
+                "expected_topic_geojson_files": 0,
                 "expected_generated_images": 0,
                 "expected_generated_thumbs": 0,
             },
@@ -975,6 +1072,25 @@ def run_check_mode(
                 f"Orphan _photos markdown without raw_data source: {orphan_path.relative_to(PROJECT_ROOT)}"
             )
 
+        topic_audit = audit_topics_for_check(raw_slugs=raw_slugs, photos_slugs=photos_slugs)
+        report["stats"]["topics_md_files"] = topic_audit["topics_md_files"]
+        report["stats"]["topics_with_featured"] = topic_audit["topics_with_featured"]
+        report["errors"].extend(topic_audit["errors"])
+        report["warnings"].extend(topic_audit["warnings"])
+
+        actual_topic_geojson: set[pathlib.Path] = set()
+        if TOPIC_MAPS_DIR.exists():
+            actual_topic_geojson.update([p.resolve() for p in TOPIC_MAPS_DIR.rglob("*.geojson") if p.is_file()])
+
+        expected_topic_geojson: set[pathlib.Path] = topic_audit["expected_topic_files"]
+        report["stats"]["expected_topic_geojson_files"] = len(expected_topic_geojson)
+
+        orphan_topic_geojson = sorted(actual_topic_geojson - expected_topic_geojson)
+        for orphan in orphan_topic_geojson:
+            report["warnings"].append(
+                f"Orphan topic GeoJSON without current featured_photos source: {orphan.relative_to(PROJECT_ROOT)}"
+            )
+
         actual_generated_images: set[pathlib.Path] = set()
         if IMAGES_DIR.exists():
             actual_generated_images.update([p.resolve() for p in IMAGES_DIR.glob("*-main.jpg") if p.is_file()])
@@ -1007,6 +1123,7 @@ def run_check_mode(
             "photos_markdown": [PHOTOS_OUTPUT_DIR / f"{slug}.md" for slug in orphan_photos_md],
             "generated_images": orphan_generated_images,
             "generated_thumbs": orphan_generated_thumbs,
+            "topic_geojson": orphan_topic_geojson,
         }
 
         summarize_check_report(report, json_output=json_output)
@@ -1188,6 +1305,200 @@ def generate_geojson(all_metadata: List[Dict]) -> Dict[str, Any]:
         }
 
 
+def _photo_feature_properties(metadata: Dict, filename: str) -> Dict[str, Any]:
+    """Build consistent GeoJSON properties for topic-scoped features."""
+    slug = metadata.get('slug') if metadata.get('slug') else metadata.get('title', '')
+    jekyll_slug = jekyll_slugify(slug)
+    photo_post_rel_url = f"/photos/{jekyll_slug}/"
+    return {
+        "title": metadata.get("title", ""),
+        "date": str(metadata.get("date", "")),
+        "labels": ",".join(metadata.get("labels", [])),
+        "filename": filename,
+        "photo_post_rel_url": photo_post_rel_url,
+        "permalink": photo_post_rel_url,
+        "text": metadata.get("title", ""),
+    }
+
+
+def build_photo_geo_feature_index(all_metadata: List[Dict]) -> Dict[str, Dict[str, Optional[Dict[str, Any]]]]:
+    """Build slug -> {origin,fov,lov} feature index from processed geo metadata."""
+    index: Dict[str, Dict[str, Optional[Dict[str, Any]]]] = {}
+
+    for metadata in all_metadata:
+        slug = metadata.get("slug")
+        if not slug:
+            continue
+
+        filename = ""
+        images = metadata.get('images')
+        if images and isinstance(images, list) and len(images) > 0:
+            primary = next((img for img in images if img.get('is_primary')), images[0])
+            filename = primary.get('file', '')
+        else:
+            filename = metadata.get('primary_image', slug)
+
+        properties = _photo_feature_properties(metadata, filename)
+        features: Dict[str, Optional[Dict[str, Any]]] = {
+            "origin": None,
+            "fov": None,
+            "lov": None,
+        }
+
+        if metadata.get("_origin"):
+            features["origin"] = {
+                "type": "Feature",
+                "properties": properties,
+                "geometry": create_geojson_point(metadata["_origin"].y, metadata["_origin"].x),
+            }
+
+        if metadata.get("_fov"):
+            coords = list(metadata["_fov"].exterior.coords)
+            features["fov"] = {
+                "type": "Feature",
+                "properties": properties,
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [coords],
+                },
+            }
+
+        loc = metadata.get("location")
+        if isinstance(loc, dict):
+            lov_geojson = loc.get("line_of_sight_geojson")
+            if lov_geojson:
+                try:
+                    lov_geom = json.loads(lov_geojson)
+                    features["lov"] = {
+                        "type": "Feature",
+                        "properties": properties,
+                        "geometry": lov_geom,
+                    }
+                except Exception as e:
+                    logger.warning(f"Failed to parse line_of_sight_geojson for '{slug}': {e}")
+
+        index[slug] = features
+
+    return index
+
+
+def load_topic_featured_ids() -> List[Dict[str, Any]]:
+    """Load topic slugs and featured photo IDs from _topics/*.md frontmatter."""
+    topics: List[Dict[str, Any]] = []
+    if not TOPICS_DIR.exists():
+        logger.info(f"Topics directory not found, skipping topic maps: {TOPICS_DIR}")
+        return topics
+
+    for topic_path in sorted(TOPICS_DIR.glob("*.md")):
+        try:
+            with open(topic_path, "r", encoding="utf-8") as f:
+                post = frontmatter.load(f)
+        except Exception as e:
+            logger.warning(f"Skipping topic '{topic_path.name}': failed to parse frontmatter ({e})")
+            continue
+
+        featured = post.metadata.get("featured_photos")
+        if not isinstance(featured, list) or not featured:
+            continue
+
+        featured_ids: List[str] = []
+        for item in featured:
+            if isinstance(item, dict) and item.get("id"):
+                featured_ids.append(str(item.get("id")))
+
+        if not featured_ids:
+            continue
+
+        topics.append({
+            "slug": topic_path.stem,
+            "path": topic_path,
+            "featured_ids": featured_ids,
+        })
+
+    return topics
+
+
+def generate_topic_geojson(all_metadata: List[Dict]) -> Dict[str, Any]:
+    """Generate topic-specific origin/fov/lov GeoJSON files from featured photo IDs."""
+    try:
+        topics = load_topic_featured_ids()
+        if not topics:
+            logger.info("No topics with featured_photos found; skipping topic-specific GeoJSON generation")
+            return {
+                "ok": True,
+                "topics_scanned": 0,
+                "topics_generated": 0,
+                "files_written": 0,
+            }
+
+        feature_index = build_photo_geo_feature_index(all_metadata)
+        TOPIC_MAPS_DIR.mkdir(parents=True, exist_ok=True)
+
+        topics_generated = 0
+        files_written = 0
+
+        for topic in topics:
+            topic_slug = topic["slug"]
+            topic_dir = TOPIC_MAPS_DIR / topic_slug
+            topic_dir.mkdir(parents=True, exist_ok=True)
+
+            origin_features: List[Dict[str, Any]] = []
+            fov_features: List[Dict[str, Any]] = []
+            lov_features: List[Dict[str, Any]] = []
+
+            for featured_id in topic["featured_ids"]:
+                item_features = feature_index.get(featured_id)
+                if not item_features:
+                    raise ValueError(
+                        f"Topic '{topic_slug}' references missing photo '{featured_id}'"
+                    )
+
+                if item_features.get("origin"):
+                    origin_features.append(item_features["origin"])
+                if item_features.get("fov"):
+                    fov_features.append(item_features["fov"])
+                if item_features.get("lov"):
+                    lov_features.append(item_features["lov"])
+
+            output_sets = [
+                ("origin.geojson", origin_features),
+                ("fov.geojson", fov_features),
+                ("lov.geojson", lov_features),
+            ]
+
+            for filename, features in output_sets:
+                fc = {
+                    "type": "FeatureCollection",
+                    "features": features,
+                }
+                out_path = topic_dir / filename
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(fc, f, ensure_ascii=False)
+                files_written += 1
+
+            topics_generated += 1
+
+        logger.info(
+            f"Topic GeoJSON summary topics_scanned={len(topics)} topics_generated={topics_generated} files_written={files_written}"
+        )
+        return {
+            "ok": True,
+            "topics_scanned": len(topics),
+            "topics_generated": topics_generated,
+            "files_written": files_written,
+        }
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed topic-specific GeoJSON generation: {e}")
+        return {
+            "ok": False,
+            "topics_scanned": 0,
+            "topics_generated": 0,
+            "files_written": 0,
+        }
+
+
 # ============================================================================
 # Jekyll Output
 # ============================================================================
@@ -1317,11 +1628,13 @@ def main():
     if mode == "geo":
         geojson_metadata = collect_geojson_metadata(all_md_files)
         geo_stats = generate_geojson(geojson_metadata)
+        topic_stats = generate_topic_geojson(geojson_metadata)
         logger.info(
             f"Summary mode=geo files={len(all_md_files)} geo_ok={geo_stats['ok']} "
-            f"origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']}"
+            f"origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']} "
+            f"topic_ok={topic_stats['ok']} topics={topic_stats['topics_generated']} topic_files={topic_stats['files_written']}"
         )
-        return bool(geo_stats["ok"])
+        return bool(geo_stats["ok"] and topic_stats["ok"])
 
     if mode == "changed":
         changed_files, deleted_slugs = get_git_raw_data_changes()
@@ -1361,17 +1674,19 @@ def main():
 
     geojson_metadata = collect_geojson_metadata(all_md_files)
     geo_stats = generate_geojson(geojson_metadata)
+    topic_stats = generate_topic_geojson(geojson_metadata)
 
     logger.info(
         f"Summary mode=all files={len(all_md_files)} posts_written={success_count} "
-        f"geo_ok={geo_stats['ok']} origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']}"
+        f"geo_ok={geo_stats['ok']} origins={geo_stats['origins']} fovs={geo_stats['fovs']} lov={geo_stats['lov']} "
+        f"topic_ok={topic_stats['ok']} topics={topic_stats['topics_generated']} topic_files={topic_stats['files_written']}"
     )
 
-    return success_count > 0 and bool(geo_stats["ok"])
+    return success_count > 0 and bool(geo_stats["ok"]) and bool(topic_stats["ok"])
 
 
 if __name__ == "__main__":
     result = main()
-    if isinstance(result, int):
+    if type(result) is int:
         exit(result)
     exit(0 if result else 1)

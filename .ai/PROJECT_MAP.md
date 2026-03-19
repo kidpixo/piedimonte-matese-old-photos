@@ -317,6 +317,63 @@ Bootstrap automatically updates `aria-expanded` on the button — no custom JS r
 | Multi-stage Docker | Planned | Need Stage 1: Python, Stage 2: Jekyll, Stage 3: Nginx |
 | Asset migration | Pending | Move `public/` CSS/JS to `assets/` |
 
+### Topic-Specific GeoJSON Filtering Strategy (Hybrid Approach)
+
+Problem: Topics `_topics\*.md` reference multiple photos `featured_photos`, and need to display only those photos on the map — but manual per-topic GeoJSON generation is error-prone, while runtime filtering scales poorly beyond ~500 photos.
+
+Solution Chosen:
+
+✅ Hybrid pipeline:
+
+Build-time: `process_research.py` auto-generates topic-specific GeoJSON files `assets/maps\_data/topics/{slug}/{origin,fov,lov}.geojson` only when `featured_photos exists`
+
+Runtime: `myscript.js` loads topic-specific files first (fast, O(1)), falls back to filtering global GeoJSON if missing (graceful degradation)
+
+✅ Validation layer: Python script raises ValueError if `featured_photos` references a non-existent photo → catches mismatches before Jekyll build
+✅ Consistent UX: Uses same `featured_photos` list as the single source of truth (no extra frontmatter keys needed)
+
+Implementation:
+
+```python 
+# In process_research.py (build-time)
+for fid in featured_ids:
+    if fid not in photo_index:
+        raise ValueError(f"Topic '{slug}' references missing photo '{fid}'")
+# Generates assets/maps_data/topics/{slug}/{origin,fov,lov}.geojson
+```
+
+```javascript
+// In myscript.js (runtime)
+async function addTopicLayers() {
+  const slug = window.topicSlug || "{{ page.slug }}";
+  const base = SITE_BASE.href + "assets/maps_data/topics/" + slug + "/";
+  // Try topic-specific files first (fast, scalable)
+  for (const {id, url} of topicFiles) {
+    try { /* load */; loaded = true; }
+    catch { /* silent fallback */ }
+  }
+  // Fallback: runtime filtering if topic files missing
+  if (!loaded && window.topicFeaturedPhotos?.length) {
+    await addFilteredPhotoLayers(window.topicFeaturedPhotos);
+  }
+}
+```
+
+Tradeoffs:
+
+- ⚠️ Build dependency: Requires running `process_research.py` before Jekyll (but this is already standard)
+- ✅ Scales to 10k+ photos: Topic files are tiny (e.g., 2 photos = ~2KB)
+- ✅ Zero data drift: Validation ensures `featured_photos` ↔ topic files always match
+- ✅ Future-proof: Can upgrade from runtime → pre-generated without changing `topic.html` or `myscript.js`(just swap URL path)
+
+Why hybrid?
+- Small topics (<50 photos): Pre-generated files are negligible overhead, but runtime filtering is acceptable
+- Large topics (>500 photos): Pre-generated files avoid O(n) parsing bottleneck
+- Dev workflow: If script is skipped, fallback ensures something shows (vs. silent failure)
+
+Pattern:
+ Pre-filter at build time for scale, but validate and fallback for resilience.
+
 ---
 
 ## Next Steps (From README.md Tasks)

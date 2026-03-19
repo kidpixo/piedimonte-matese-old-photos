@@ -8,9 +8,118 @@
 
 ## Current Status
 
-**Project Phase**: Layout Templates (Phase 3) DONE → Docker Build (Phase 4) NEXT  
-**Last Updated**: 2026-03-10 (Phase 3 fully complete—variants + GeoJSON overlays implemented)  
+**Project Phase**: Phase 3.7 (Topic-specific GeoJSON hybrid) IN PROGRESS → Docker Build (Phase 4) NEXT  
+**Last Updated**: 2026-03-19 (pytest collection fixed; manual browser fallback verification pending)  
 **Blocker**: None
+
+### Update Log — 2026-03-19 (pytest collection import-mismatch fix)
+
+**What changed**
+- Added `pytest.ini` at project root to avoid duplicate test discovery from generated `_site/` output.
+- Configured pytest collection scope:
+  - `testpaths = tests`
+  - `norecursedirs = _site .git .jekyll-cache .pytest_cache`
+
+**Why**
+- Fixed `import file mismatch` errors caused by duplicate test module names in both `tests/` and `_site/tests/`.
+
+**Validation executed**
+- `python -m pytest` (conda env `cotonificio`)
+- Result: `5 passed`
+
+### Update Log — 2026-03-19 (targeted helper coverage expansion)
+
+**What changed**
+- Added a new helper-focused pytest module:
+  - `tests/test_process_research_helpers.py`
+- Added 8 targeted tests for non-IO-heavy logic in `scripts/process_research.py`:
+  - `jekyll_slugify(...)` normalization behavior
+  - `derive_photo_post_rel_url(...)` primary-image and fallback branches
+  - `normalize_location_data(...)` geometry-key stripping
+  - `add_geojson_to_location(...)` with computed boresight and explicit boresight branches
+  - `load_topic_featured_ids(...)` valid extraction/skip logic and parse-failure handling
+
+**Validation executed**
+- `python -m pytest --cov=scripts.process_research --cov-branch --cov-report=term-missing` (conda env `cotonificio`)
+- Result: `13 passed`
+- Coverage for `scripts/process_research.py`: `42%` (up from `40%` baseline)
+
+### Update Log — 2026-03-19 (`run_check_mode` topic audit hardening)
+
+**What changed**
+- Added Phase 3.7 integrity coverage to `scripts/process_research.py` `run_check_mode(...)`:
+  - Audits `_topics/*.md` frontmatter parsing
+  - Validates `featured_photos` shape (`list[object{id}]`)
+  - Validates each `featured_photos[].id` exists in `raw_data/*.md`
+  - Warns when featured IDs exist in `raw_data` but corresponding `_photos/*.md` are not generated yet
+  - Computes expected topic GeoJSON files (`origin/fov/lov`) per topic and warns when missing (runtime fallback path)
+  - Detects orphan topic GeoJSON files under `assets/maps_data/topics/**` and includes them in `--clean` removal set
+- Extended check report stats with topic dimensions:
+  - `topics_md_files`
+  - `topics_with_featured`
+  - `expected_topic_geojson_files`
+
+**Validation executed**
+- `python scripts/process_research.py --check --json` (with conda env `cotonificio`)
+  - Verified new topic stats are present
+  - Current dataset result: `errors=[]`, `warnings=[]`
+
+### Update Log — 2026-03-19 (pytest coverage for `process_research.py`)
+
+**What changed**
+- Added pytest module for check-mode and topic-audit behavior:
+  - `tests/test_process_research_check_mode.py`
+- Tests isolate filesystem dependencies via `tmp_path` and monkeypatch the script path constants.
+- Covered behaviors:
+  - topic featured photo reference validation (`audit_topics_for_check`)
+  - JSON report includes new topic stats in `run_check_mode`
+  - `strict_warnings` returns `-1` when topic GeoJSON warnings exist
+
+**Validation executed**
+- `python -m pytest -q tests/test_process_research_check_mode.py` (conda env `cotonificio`)
+- Result: `3 passed`
+
+### Update Log — 2026-03-19 (pytest module for `generate_topic_geojson`)
+
+**What changed**
+- Added second pytest module for build-time topic GeoJSON generation:
+  - `tests/test_process_research_topic_geojson.py`
+- Added explicit assertions for:
+  - invalid featured id path raises `ValueError` in `generate_topic_geojson(...)`
+  - happy path creates `origin.geojson`, `fov.geojson`, `lov.geojson` under `assets/maps_data/topics/{topic-slug}/`
+  - generated FeatureCollections contain expected geometry types (`Point`, `Polygon`, `LineString`)
+
+**Validation executed**
+- `python -m pytest -q tests/test_process_research_check_mode.py tests/test_process_research_topic_geojson.py` (conda env `cotonificio`)
+- Result: `5 passed`
+
+### Update Log — 2026-03-18 (Phase 3.7 hybrid topic GeoJSON)
+
+**What changed**
+- Implemented build-time topic-specific GeoJSON generation in `scripts/process_research.py`:
+  - Parses `_topics/*.md` and reads `featured_photos[].id`
+  - Generates `assets/maps_data/topics/{topic-slug}/{origin,fov,lov}.geojson`
+  - Raises `ValueError` on invalid topic references (missing photo slug)
+- Implemented runtime hybrid loading in `assets/js/myscript.js`:
+  - Topic pages attempt topic files first (`origin/fov/lov`)
+  - Falls back to filtered global GeoJSON using `window.topicFeaturedPhotos`
+  - Logs explicit `console.info`/`console.warn` diagnostics for load path/fallback
+  - No-op safe when topic has no featured IDs (does not render global full dataset)
+- Wired topic template context in `_layouts/topic.html`:
+  - Exposes `window.topicSlug` and `window.topicFeaturedPhotos`
+  - Adds topic map container and map script include when featured photos exist
+  - Fixed Liquid map-enable assignment to avoid Jekyll syntax warning
+- Fixed script exit behavior in `scripts/process_research.py` (`bool` no longer treated as int exit code)
+
+**Validation executed**
+- `python3 -m py_compile scripts/process_research.py`
+- `python3 scripts/process_research.py geo` (summary includes `topic_ok=True`, `topics=1`, `topic_files=3`)
+- Generated topic map files verified:
+  - `assets/maps_data/topics/test-topic-ciminiera-e-ponte/origin.geojson`
+  - `assets/maps_data/topics/test-topic-ciminiera-e-ponte/fov.geojson`
+  - `assets/maps_data/topics/test-topic-ciminiera-e-ponte/lov.geojson`
+- Negative validation test confirmed explicit failure for invalid `featured_photos` id (`ValueError`)
+- `node --check assets/js/myscript.js` (OK)
 
 ### Update Log — 2026-03-14 (`scripts/process_research.py` hardening)
 
@@ -135,8 +244,9 @@ Why:
 - [x] **Phase 1**: Python data pipeline (`scripts/process_research.py`) ← **DONE**
 - [x] **Phase 2**: Jekyll config (collections + paths) ← **DONE**
 - [x] **Phase 3**: Layout templates (photo.html + topic.html + label.html) ← **DONE**
+- [X] **Phase 3.7**: Topic-specific GeoJSON filtering (hybrid build-time + runtime fallback)
 - [ ] **Phase 4**: Docker multi-stage build
-- [ ] **Phase 5**: Asset migration (public/ → assets/)
+- [X] **Phase 5**: Asset migration (public/ → assets/)
 
 ---
 
@@ -672,6 +782,80 @@ cdn_libs:
 
 ---
 
+## Phase 3.7: Topic-Specific GeoJSON Filtering (Hybrid Approach)
+
+**Status**: in-progress (core implementation complete; browser fallback E2E pending)  
+**Owner**: Completed (implementation) / Pending (manual browser validation)  
+**Priority**: P1  
+**Goal**: Implement topic map loading strategy that prefers pre-generated topic GeoJSON files and gracefully falls back to runtime filtering from global datasets.
+
+### Description
+Implement the hybrid strategy documented in `PROJECT_MAP.md`:
+- **Build-time** (`scripts/process_research.py`): auto-generate per-topic GeoJSON files under `assets/maps_data/topics/{topic-slug}/` when `featured_photos` exists.
+- **Runtime** (`assets/js/myscript.js`): try loading topic-specific files first; if missing, fallback to filtering global GeoJSON by `featured_photos` IDs.
+- **Validation**: fail fast when a topic references non-existent photos.
+
+### Task 3.7.1: Build-time generation in `scripts/process_research.py`
+
+- [x] Parse all `_topics/*.md` with `featured_photos`
+- [x] Normalize featured IDs from frontmatter shape: `[{id: photo_slug, commentary: ...}]`
+- [x] Build/maintain `photo_index` from generated photo metadata
+- [x] Validate each featured ID exists in photo index
+- [x] Raise explicit `ValueError` on missing photo reference (include topic slug + missing id)
+- [x] Generate per-topic GeoJSON set:
+  - [x] `assets/maps_data/topics/{slug}/origin.geojson`
+  - [x] `assets/maps_data/topics/{slug}/fov.geojson`
+  - [x] `assets/maps_data/topics/{slug}/lov.geojson`
+- [x] Skip generation cleanly when topic has no `featured_photos` key
+- [x] Log generation summary (topics scanned, topic files generated, validation errors)
+
+### Task 3.7.2: Runtime hybrid loader in `assets/js/myscript.js`
+
+- [x] Add `addTopicLayers()` flow for topic pages
+- [x] Resolve topic slug from `window.topicSlug` (or page-derived fallback)
+- [x] Attempt topic-file load first (O(1) path):
+  - [x] `origin.geojson`
+  - [x] `fov.geojson`
+  - [x] `lov.geojson`
+- [x] If any topic files fail/missing, fallback to `addFilteredPhotoLayers(window.topicFeaturedPhotos)`
+- [x] Ensure fallback is not silent: log concise `console.warn`/`console.info` explaining fallback path
+- [x] Keep behavior no-op-safe when `topicFeaturedPhotos` is empty/missing
+
+### Task 3.7.3: Topic template wiring (`_layouts/topic.html`)
+
+- [x] Expose `window.topicSlug` and `window.topicFeaturedPhotos` from frontmatter
+- [x] Ensure IDs passed to JS are slugs used by photo collection
+- [x] Keep map container + layer toggles compatible with existing map initialization
+
+### Acceptance Criteria
+
+- [x] For topics with valid `featured_photos`, pre-generated topic GeoJSON files are produced at build-time
+- [x] For missing/invalid featured IDs, build fails with explicit validation error (no silent mismatch)
+- [ ] Topic page map attempts topic-specific files first and renders without global filtering path when files exist *(pending browser verification)*
+- [ ] If topic files are missing, runtime fallback renders only featured photos from global datasets *(pending browser verification)*
+- [x] No hardcoded host/base paths; all URLs use existing site base/path helpers
+- [x] Console output provides clear diagnostics for load path (topic files vs fallback)
+
+### Validation Plan
+
+- [x] Run syntax check: `python3 -m py_compile scripts/process_research.py`
+- [x] Run build mode that generates map datasets and verify topic folders under `assets/maps_data/topics/`
+- [x] Run `--check` and verify topic audits cover featured IDs + topic geojson expected/orphan detection
+- [ ] Open one topic with valid references and verify map overlays load from topic files
+- [ ] Temporarily remove/rename a topic geojson file and verify runtime fallback works
+- [x] Add one invalid featured photo id in a test topic and verify `ValueError` path
+- [x] Run JS syntax check: `node --check assets/js/myscript.js`
+
+### Related Files
+
+- [scripts/process_research.py](scripts/process_research.py)
+- [assets/js/myscript.js](assets/js/myscript.js)
+- [_layouts/topic.html](_layouts/topic.html)
+- [_topics/test-topic-ciminiera-e-ponte.md](_topics/test-topic-ciminiera-e-ponte.md)
+- [.ai/PROJECT_MAP.md](PROJECT_MAP.md#topic-specific-geojson-filtering-strategy-hybrid-approach)
+
+---
+
 ## Phase 4: Docker Multi-Stage Build
 
 **Status**: not-started  
@@ -722,13 +906,13 @@ Move theme resources to follow Jekyll standards:
 - Update references in `_includes/head.html` + `_includes/sidebar.html`
 
 ### Acceptance Criteria
-- [ ] All CSS files moved to `assets/css/`
-- [ ] All JS files moved to `assets/js/`
-- [ ] `_includes/head.html` updated with new paths
-- [ ] `_includes/sidebar.html` updated with new paths
-- [ ] No broken links in built _site/
-- [ ] Page loads correctly locally
-- [ ] Git commit reflects move (no content changes)
+- [X] All CSS files moved to `assets/css/`
+- [X] All JS files moved to `assets/js/`
+- [X] `_includes/head.html` updated with new paths
+- [X] `_includes/sidebar.html` updated with new paths
+- [X] No broken links in built _site/
+- [X] Page loads correctly locally
+- [X] Git commit reflects move (no content changes)
 
 ### Dependencies
 - [ ] Phases 1-4 working

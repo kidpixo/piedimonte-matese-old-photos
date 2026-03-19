@@ -377,6 +377,211 @@ async function addRasterLayers() {
     }
 }
 
+function isTopicContext() {
+    return typeof window.topicSlug === 'string' && window.topicSlug.trim() !== '';
+}
+
+function slugifyPhotoId(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/_/g, '-')
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function extractPhotoSlugFromFeature(feature) {
+    const props = (feature && feature.properties) || {};
+    const rel = String(props.permalink || props.photo_post_rel_url || '');
+    const match = rel.match(/\/photos\/([^/]+)\//);
+    if (match && match[1]) {
+        return slugifyPhotoId(match[1]);
+    }
+
+    const file = String(props.filename || '');
+    if (file) {
+        const stem = file.split('/').pop().replace(/\.[^.]+$/, '');
+        return slugifyPhotoId(stem.replace(/-main$/, ''));
+    }
+
+    return '';
+}
+
+function buildFeaturedSlugSet(featuredIds) {
+    const ids = Array.isArray(featuredIds) ? featuredIds : [];
+    return new Set(ids.map(slugifyPhotoId).filter(Boolean));
+}
+
+async function fetchGeoJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`);
+    }
+    return response.json();
+}
+
+function buildPopupContent(feature) {
+    const props = feature?.properties || {};
+    if (!(props.text && props.filename)) {
+        return null;
+    }
+    const text = String(props.text).replace(/['"]+/g, "");
+    const filename = String(props.filename);
+    const permalink = String(props.permalink || props.photo_post_rel_url || "");
+    const linkUrl = SITE_BASE.origin + permalink;
+    return `<div><b>${text}</b><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">` +
+        (filename.includes(".webm")
+            ? `<video controls id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}"></video>`
+            : `<img id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}">`) +
+        "</a></div>";
+}
+
+function addGeoJsonLayerFromData(cfg, geojson) {
+    const geoJsonOptions = cfg.style ? { ...cfg.style } : {};
+    const configOnEachFeature = geoJsonOptions.onEachFeature;
+
+    geoJsonOptions.onEachFeature = (feature, layer) => {
+        if (typeof configOnEachFeature === "function") {
+            configOnEachFeature(feature, layer);
+        }
+        const popupContent = buildPopupContent(feature);
+        if (popupContent) {
+            layer.bindPopup(popupContent, { maxWidth: "auto" });
+        }
+    };
+
+    if (layers[cfg.id] && layers.map && layers.map.hasLayer(layers[cfg.id])) {
+        layers.map.removeLayer(layers[cfg.id]);
+    }
+
+    layers[cfg.id] = L.geoJSON(geojson, geoJsonOptions).addTo(layers.map);
+    layers[cfg.id].options["layer_id"] = cfg.id;
+    return layers[cfg.id];
+}
+
+async function addGlobalPhotoLayers() {
+    const promises = [];
+    for (const key in LAYER_CONFIG) {
+        const cfg = LAYER_CONFIG[key];
+        if (!cfg.visible || cfg.layerType !== 'geojson') continue;
+
+        const promise = new Promise((resolve, reject) => {
+            getJSON(cfg.url, (geojson) => {
+                try {
+                    addGeoJsonLayerFromData(cfg, geojson);
+                    resolve();
+                } catch (error) {
+                    console.error(`Error adding photo layer for ${cfg.id}:`, error);
+                    reject(error);
+                }
+            });
+        });
+
+        promises.push(promise);
+    }
+
+    return Promise.all(promises);
+}
+
+async function addFilteredPhotoLayers(featuredIds) {
+    const featuredSlugSet = buildFeaturedSlugSet(featuredIds);
+    if (!featuredSlugSet.size) {
+        console.info('Topic fallback skipped: no topicFeaturedPhotos IDs provided');
+        return false;
+    }
+
+    const layerSources = [
+        { cfg: LAYER_CONFIG.FOTO, url: LAYER_CONFIG.FOTO.url },
+        { cfg: LAYER_CONFIG.FOTO_FOV, url: LAYER_CONFIG.FOTO_FOV.url },
+        { cfg: LAYER_CONFIG.FOTO_LINE, url: LAYER_CONFIG.FOTO_LINE.url }
+    ];
+
+    let loadedAny = false;
+    for (const { cfg, url } of layerSources) {
+        if (!cfg || !cfg.visible) {
+            continue;
+        }
+        try {
+            const geojson = await fetchGeoJson(url);
+            const filteredFeatures = (Array.isArray(geojson?.features) ? geojson.features : [])
+                .filter((feature) => featuredSlugSet.has(extractPhotoSlugFromFeature(feature)));
+
+            const filteredGeojson = {
+                type: 'FeatureCollection',
+                features: filteredFeatures,
+            };
+
+            addGeoJsonLayerFromData(cfg, filteredGeojson);
+            loadedAny = true;
+        } catch (error) {
+            console.error(`Topic fallback failed for ${cfg.id}:`, error);
+        }
+    }
+
+    return loadedAny;
+}
+
+async function addTopicLayers() {
+    const rawSlug = typeof window.topicSlug === 'string' ? window.topicSlug.trim() : '';
+    if (!rawSlug) {
+        return false;
+    }
+
+    const slug = slugifyPhotoId(rawSlug);
+    const base = new URL(`assets/maps_data/topics/${slug}/`, SITE_BASE).href;
+
+    const topicFiles = [
+        { cfg: LAYER_CONFIG.FOTO, id: 'origin', url: `${base}origin.geojson` },
+        { cfg: LAYER_CONFIG.FOTO_FOV, id: 'fov', url: `${base}fov.geojson` },
+        { cfg: LAYER_CONFIG.FOTO_LINE, id: 'lov', url: `${base}lov.geojson` }
+    ];
+
+    let loadedAny = false;
+    let hadFailure = false;
+
+    for (const { cfg, id, url } of topicFiles) {
+        if (!cfg || !cfg.visible) {
+            continue;
+        }
+        try {
+            const geojson = await fetchGeoJson(url);
+            addGeoJsonLayerFromData(cfg, geojson);
+            loadedAny = true;
+        } catch (error) {
+            hadFailure = true;
+            console.warn(`Topic map file missing/unavailable (${id}): ${url}`);
+        }
+    }
+
+    if (loadedAny && !hadFailure) {
+        console.info(`Topic map loaded from pre-generated files for '${slug}'`);
+        return true;
+    }
+
+    if (loadedAny) {
+        for (const { cfg } of topicFiles) {
+            if (cfg && layers[cfg.id] && layers.map && layers.map.hasLayer(layers[cfg.id])) {
+                layers.map.removeLayer(layers[cfg.id]);
+            }
+        }
+    }
+
+    const featuredIds = Array.isArray(window.topicFeaturedPhotos) ? window.topicFeaturedPhotos : [];
+    if (!featuredIds.length) {
+        console.warn(`Topic map has no featured photo IDs for '${slug}'; skipping photo layers`);
+        return true;
+    }
+
+    console.info(`Falling back to runtime topic filtering for '${slug}'`);
+    const fallbackLoaded = await addFilteredPhotoLayers(featuredIds);
+    if (!fallbackLoaded) {
+        console.warn(`Topic fallback produced no features for '${slug}'`);
+        return true;
+    }
+    return fallbackLoaded;
+}
+
 // Add PNG image overlay (underground map)
 function addImageOverlays() {
     for (const key in LAYER_CONFIG) {
@@ -464,53 +669,14 @@ function setupCustomControls() {
 
 // Add photo origin points as a GeoJSON layer : use layer style config if present, and bind popups with photo thumbnails
 async function addPhotoLayers() {
-    const promises = [];
-    for (const key in LAYER_CONFIG) {
-        const cfg = LAYER_CONFIG[key];
-        if (!cfg.visible || cfg.layerType !== 'geojson') continue;
-
-        const promise = new Promise((resolve, reject) => {
-            getJSON(cfg.url, (geojson) => {
-                try {
-                    const geoJsonOptions = cfg.style ? { ...cfg.style } : {};
-                    const configOnEachFeature = geoJsonOptions.onEachFeature;
-
-                    geoJsonOptions.onEachFeature = (feature, layer) => {
-                        // keep layer-specific behavior (e.g. arrowheads)
-                        if (typeof configOnEachFeature === "function") {
-                            configOnEachFeature(feature, layer);
-                        }
-
-                        // add popup only when properties exist
-                        const props = feature?.properties || {};
-                        if (props.text && props.filename) {
-                            const text = String(props.text).replace(/['"]+/g, "");
-                            const filename = String(props.filename);
-                            const permalink = String(props.permalink || props.photo_post_rel_url || "");
-                            const linkUrl = SITE_BASE.origin + permalink;
-                            const popupContent = `<div><b>${text}</b><a href="${linkUrl}" target="_blank" rel="noopener noreferrer">` +
-                                (filename.includes(".webm")
-                                    ? `<video controls id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}"></video>`
-                                    : `<img id="markers_popup_photos" src="${SITE_BASE.href}assets/thumbs/${filename}" alt="${filename}">`) +
-                                "</a></div>";
-                            layer.bindPopup(popupContent, { maxWidth: "auto" });
-                        }
-                    };
-
-                    layers[cfg.id] = L.geoJSON(geojson, geoJsonOptions).addTo(layers.map);
-                    layers[cfg.id].options["layer_id"] = cfg.id;
-                    resolve();
-                } catch (error) {
-                    console.error(`Error adding photo layer for ${cfg.id}:`, error);
-                    reject(error);
-                }
-            });
-        });
-
-        promises.push(promise);
+    if (isTopicContext()) {
+        const loaded = await addTopicLayers();
+        if (loaded) {
+            return;
+        }
     }
 
-    return Promise.all(promises);
+    return addGlobalPhotoLayers();
 }
 
 /// --- Timeline Slider ---

@@ -56,8 +56,8 @@ When reviewing code or PRs:
 3. **Log Insights**: Add learnings to `.ai/MEMORY/LEARNINGS.md` at session end
 4. **Use Architect Persona**: Follow `.github/agents/architect.md` rules when reviewing
 5. **Harvest at Close**: Run `.github/prompts/harvest-learning.md` before ending session
+6. to run python code, activate the conda env cotonificio and run the command `python <script_name>.py` in the terminal.
 
----
 
 **Persona Default**: Blunt, objective Senior Systems Architect. Lead code reviewer. Identify technical debt, browser compatibility failures, and architectural anti-patterns immediately.
 
