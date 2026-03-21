@@ -392,12 +392,34 @@ def validate_frontmatter(post: frontmatter.Post, filepath: pathlib.Path) -> Tupl
     Returns: (is_valid, error_message)
     """
     missing = REQUIRED_FIELDS - set(post.metadata.keys())
-    
     if missing:
         msg = f"{filepath.name}: Missing fields: {missing}"
         logger.error(msg)
         return False, msg
-    
+
+    # --- Begin: Stricter schema/type validation for list fields ---
+    # Validate featured_photos if present
+    featured_photos = post.metadata.get("featured_photos")
+    if featured_photos is not None:
+        if not isinstance(featured_photos, list):
+            msg = f"{filepath.name}: 'featured_photos' should be a list"
+            logger.error(msg)
+            return False, msg
+        for idx, item in enumerate(featured_photos):
+            if isinstance(item, list):
+                msg = f"{filepath.name}: Nested list found in 'featured_photos' at index {idx}"
+                logger.error(msg)
+                return False, msg
+            if not isinstance(item, dict):
+                msg = f"{filepath.name}: Each item in 'featured_photos' should be a dict at index {idx}"
+                logger.error(msg)
+                return False, msg
+            if 'id' not in item:
+                msg = f"{filepath.name}: Missing 'id' key in 'featured_photos' at index {idx}"
+                logger.error(msg)
+                return False, msg
+    # --- End: Stricter schema/type validation for list fields ---
+
     images = post.metadata.get("images")
     if images is not None:
         if not isinstance(images, list) or not images:

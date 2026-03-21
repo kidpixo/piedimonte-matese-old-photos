@@ -28,18 +28,22 @@ layout: default
 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
 <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 
+<!-- Add the Leaflet MarkerCluster plugin -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script> -->
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.min.css"> -->
+
 <!-- Pass variables from page frontmatter to Javascript -->
 <script>
-  const locateControlEnabled = {{ page.locate_control | default: "false" | jsonify }};
-  const centerLat = {{ page.center_lat | default: "41.355946" | jsonify }};
-  const centerLng = {{ page.center_lng | default: "14.370868" | jsonify }};
-  const zoomLevel = {{ page.zoom | default: "18" | jsonify }};
+  const locateControlEnabled = {{ page.map.locate_control | default: "false" | jsonify }};
+  const centerLat = {{ page.map.center_lat | default: "41.355946" | jsonify }};
+  const centerLng = {{ page.map.center_lng | default: "14.370868" | jsonify }};
+  const zoomLevel = {{ page.map.zoom | default: "18" | jsonify }};
   const base_url = "{{ site.baseurl }}";
-  const map_id = "{{ page.id | default: "map" }}";
+  const map_id = "{{ page.map.id | default: "map" }}";
   const map_title = "{{ page.title | default: "Map" }}";
-  const map_description = "{{ page.description | default: "Map description" }}";
-  const map_data = {{ page.data | default: "[]" | jsonify }};
-  const activeLayers = {{ page.activelayers | default: "[]" | jsonify }};
+  const map_description = "{{ pagedescription | default: "Map description" }}";
+  const map_data = {{ page.map.data | default: "[]" | jsonify }};
+  const activeLayers = {{ page.map.activelayers | default: "[]" | jsonify }};
   const layerControlCollapsed = false;
 
   window.activeLayers = activeLayers;

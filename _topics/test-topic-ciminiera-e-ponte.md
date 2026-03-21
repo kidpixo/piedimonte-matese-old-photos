@@ -9,8 +9,15 @@ featured_photos:
     commentary: "Percorso storico verso Piazza Carmine; verifica rendering e link al dettaglio."
   - id: Via_Carmine_Cotonificio
     commentary : "Vista su Via Carmine e ruderi Cotonificio, ex Convento"
+  - id: ciminiera_cotonificio_dalla_pretura
+    commentary : "ciminiera cotonificio dalla pretura"
 map:
   map_height: 500px
+  center_lat: 41.3550422
+  center_lng: 14.3721446
+  zoom: 19
+  activelayers: ["esri","1940","foto","foto_fov","foto_line"]
+
 ---
 
 Questo e un topic di prova per verificare che la collezione `topics` mostri correttamente i collegamenti alle foto.

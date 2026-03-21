@@ -23,9 +23,9 @@ layout: default
   <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 
   <script>
-    const locateControlEnabled = {{ page.locate_control | default: "false" | jsonify }};
-    const centerLat = {{ page.center_lat | default: "41.355946" | jsonify }};
-    const centerLng = {{ page.center_lng | default: "14.370868" | jsonify }};
+    const locateControlEnabled = {{ page.map.locate_control | default: "false" | jsonify }};
+    const centerLat = {{ page.map.center_lat | default: "41.355946" | jsonify }};
+    const centerLng = {{ page.map.center_lng | default: "14.370868" | jsonify }};
     const zoomLevel = {{ page.map.zoom | default: "18" | jsonify }};
     const base_url = "{{ site.baseurl }}";
     const map_id = "{{ page.id | default: "map" }}";
@@ -62,6 +62,18 @@ layout: default
   </div>
 
   <hr>
+
+  {% if map_enabled %}
+    <section class="topic-map" style="margin-top: 2rem;">
+      <h3>Mappa del Topic</h3>
+      <div class="folium-map" id="map" style="width: {{ page.map.map_width | default: "100%" }}; height: {{ page.map.map_height | default: "300px" }};"></div>
+    </section>
+  {% endif %}
+</article>
+
+{% if map_enabled %}
+  <script src="{{ site.baseurl }}/assets/js/myscript.js"></script>
+{% endif %}
 
   <section class="topic-gallery">
     <h3>Documentazione Collegata</h3>
@@ -101,15 +113,3 @@ layout: default
       {% endif %}
     {% endfor %}
   </section>
-
-  {% if map_enabled %}
-    <section class="topic-map" style="margin-top: 2rem;">
-      <h3>Mappa del Topic</h3>
-      <div class="folium-map" id="map" style="width: {{ page.map.map_width | default: "100%" }}; height: {{ page.map.map_height | default: "300px" }};"></div>
-    </section>
-  {% endif %}
-</article>
-
-{% if map_enabled %}
-  <script src="{{ site.baseurl }}/assets/js/myscript.js"></script>
-{% endif %}

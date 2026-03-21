@@ -325,7 +325,7 @@ Solution Chosen:
 
 ✅ Hybrid pipeline:
 
-Build-time: `process_research.py` auto-generates topic-specific GeoJSON files `assets/maps\_data/topics/{slug}/{origin,fov,lov}.geojson` only when `featured_photos exists`
+Build-time: `process_research.py` auto-generates topic-specific GeoJSON files `assets/maps_data/topics/{slug}/{origin,fov,lov}.geojson` only when `featured_photos exists`
 
 Runtime: `myscript.js` loads topic-specific files first (fast, O(1)), falls back to filtering global GeoJSON if missing (graceful degradation)
 

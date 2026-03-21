@@ -1,11 +1,13 @@
 ---
 layout: map
 title: General Map
-center_lat: 41.3550422
-center_lng: 14.3721446
-zoom: 18
-activelayers: ["esri","1940","1964","foto","foto_line"]
+map:
+    center_lat: 41.3550422
+    center_lng: 14.3721446
+    zoom: 18
+    activelayers: ["esri","1940","1964","foto"]
 locate_control: true
+    markercluster: true
 ---
 
 

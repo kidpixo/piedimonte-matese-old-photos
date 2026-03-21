@@ -32,9 +32,9 @@ images: &id001
   note: Colorized interpretation
   alt: Versione colorizzata della foto storica
   is_primary: false
-center_lat: 41.355946
-center_lng: 14.370868
 map:
+  center_lat: 41.355946
+  center_lng: 14.370868
   zoom: 20
   map_height: 500px
 date: 1970-01-01

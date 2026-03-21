@@ -4,6 +4,11 @@ Links:
 
 - [https://unblurimage.ai/old-photo-restoration/](https://unblurimage.ai/old-photo-restoration/)
 
+## Ciminiera_cotonificio_dalla_pretura.jpg
+
+Link [foto](https://www.facebook.com/photo/?fbid=238673804250859)
+![](Ciminiera_cotonificio_dalla_pretura.jpg)
+
 ## ViaAntonioGaetani_1910.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=1145485440958391)

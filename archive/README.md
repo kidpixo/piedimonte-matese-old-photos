@@ -383,13 +383,6 @@ Link [foto](https://www.facebook.com/photo/?fbid=211658382964202)
 Link [foto](https://www.facebook.com/photo/?fbid=10200824990608456)
 ![](piazzacarmine_26-ottobre-1966.jpg)
 
-
-## Ciminiera_cotonificio_dalla_pretura.jpg
-
-Link [foto](https://www.facebook.com/photo/?fbid=238673804250859)
-![](Ciminiera_cotonificio_dalla_pretura.jpg)
-
-
 ## Operaie_Cotonificio_1940.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=1213097735711157)
@@ -504,11 +497,11 @@ Link [foto](https://www.facebook.com/photo/?fbid=700520619990154&set=g.174126156
 
 ![](Maretto_1931.jpg)
 
-## Cotonifiio_1906.jpg
+## Cotonificio_1906.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=910983678928078&set=g.174126156113405)
 
-![](Cotonifiio_1906.jpg)
+![](Cotonificio_1906.jpg)
 
 ## SanRocco_PonteOssa2.jpg
 

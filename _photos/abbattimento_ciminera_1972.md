@@ -26,9 +26,9 @@ images: &id001
   note: Noise-reduced version
   alt: Versione denoise della stessa scena
   is_primary: true
-center_lat: 41.355946
-center_lng: 14.370868
 map:
+  center_lat: 41.355946
+  center_lng: 14.370868
   zoom: 19
   map_height: 500px
 date: 1972-01-01

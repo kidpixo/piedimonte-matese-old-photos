@@ -1,3 +1,61 @@
+ /**
+ * Interactive Map Script for Jekyll Static Site
+ * ---------------------------------------------
+ * This script powers the interactive Leaflet map for a Jekyll-based static site, supporting historical and contemporary map layers, photo overlays, and topic-specific filtering. 
+ * 
+ * Main Actions:
+ * - Loads and configures raster, tile, image, and GeoJSON layers from CDN or local assets, using a centralized configuration object.
+ * - Reads configuration from both Jekyll frontmatter-injected variables and URL parameters, allowing per-page and per-session customization.
+ * - Handles topic context: if a topic is active, loads topic-specific overlays or filters global photo layers to only show featured photos.
+ * - Adds a timeline slider for historical raster overlays, with smooth opacity transitions and playback controls.
+ * - Provides custom controls: reset zoom, opacity sliders for overlays, fullscreen, geolocation, and a context menu for coordinates.
+ * - Implements defensive coding: all resource loads are checked, errors are logged, and missing/malformed data falls back to safe defaults.
+ * - Ensures accessibility and ARIA compliance for all custom controls.
+ * - All external libraries are loaded via pinned CDN URLs with SRI hashes, and no backend or build pipeline is required.
+ *
+ * External Variables (can be set via Jekyll frontmatter or injected in the page):
+ * ------------------------------------------------------------------------------
+ * - base_url (string): Jekyll base URL.  
+ *      - Default: ""  
+ *      - Action: Sets the root for all asset and permalink URLs. Used to resolve all relative paths for map layers and images.
+ * - centerLat (number): Initial map center latitude.  
+ *      - Default: 41.35512154669242  
+ *      - Action: Sets the initial latitude for the map center. Overridden by ?center= URL param.
+ * - centerLng (number): Initial map center longitude.  
+ *      - Default: 14.372210047410501  
+ *      - Action: Sets the initial longitude for the map center. Overridden by ?center= URL param.
+ * - zoomLevel (number): Initial map zoom level.  
+ *      - Default: 17  
+ *      - Action: Sets the initial zoom level for the map. Overridden by ?zoom= URL param.
+ * - activeLayers (array): List of overlay layer names to activate by default.  
+ *      - Default: []  
+ *      - Action: Controls which overlays are visible on map load. Overridden by ?layers= URL param.
+ * - topicSlug (string): Slug for the current topic (enables topic-specific overlays).  
+ *      - Default: ""  
+ *      - Action: If set, loads overlays from topic-specific GeoJSON files or filters global photo layers to only show featured photos.
+ * - topicFeaturedPhotos (array): List of photo IDs featured in the current topic.  
+ *      - Default: []  
+ *      - Action: If topicSlug is set but topic overlays are missing, filters global photo layers to only show these photos.
+ * - photoOriginGeoJson (object): GeoJSON for a single photo origin (for photo detail pages).  
+ *      - Default: undefined  
+ *      - Action: If set, adds a point overlay for the photo's origin.
+ * - photoFovGeoJson (object): GeoJSON for a single photo field of view (for photo detail pages).  
+ *      - Default: undefined  
+ *      - Action: If set, adds a polygon overlay for the photo's field of view.
+ * - photoLineGeoJson (object): GeoJSON for a single photo line of sight (for photo detail pages).  
+ *      - Default: undefined  
+ *      - Action: If set, adds a line overlay for the photo's line of sight.
+ *
+ * URL Parameters Supported:
+ * -------------------------
+ * - ?layers=layer1,layer2,... : Comma-separated list of overlay layer names to activate. Overrides activeLayers.
+ * - ?center=lat,lng           : Initial map center coordinates. Overrides centerLat/centerLng.
+ * - ?zoom=number              : Initial map zoom level. Overrides zoomLevel.
+ *
+ * All configuration is defensive: missing or malformed variables fall back to defaults.
+ * Errors are logged to the console; no silent failures.
+ */
+
 // Constants and configuration for the map and layers
 // Use window.location.origin for local dev to avoid CORS issues with 0.0.0.0 vs localhost
 // Use base_url from template for production
