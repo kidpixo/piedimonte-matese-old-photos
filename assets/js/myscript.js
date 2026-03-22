@@ -54,6 +54,38 @@
  *
  * All configuration is defensive: missing or malformed variables fall back to defaults.
  * Errors are logged to the console; no silent failures.
+ * 
+ * Layers Configured
+ * -----------------
+ * 
+ * Basemaps:
+ * - OpenStreetMap, LAYER_CONFIG key: OSM, id: "osm", year: none
+ * 
+ * Overlays:
+ * - Esri Satellite, LAYER_CONFIG key: ESRI, id: "esri", year: none, slider: true, type: tile
+ * - 1884 Raster, LAYER_CONFIG key: RASTER_1884, id: "1884", year: "1884", slider: true, type: georaster
+ * - 1940 Raster, LAYER_CONFIG key: RASTER_1940, id: "1940", year: "1940", slider: true, type: georaster, grayscale: true
+ * - 1964 Raster, LAYER_CONFIG key: RASTER_1964, id: "1964", year: "1964", slider: true, type: georaster
+ * - 1970 Raster, LAYER_CONFIG key: RASTER_1970, id: "1970", year: "1970", slider: true, type: georaster, grayscale: true
+ * - Underground Map, LAYER_CONFIG key: SOTTERRANEO, id: "sotterraneo", year: none, slider: true, type: image, imageBounds: [latlng array]
+ * - Photo Origins, LAYER_CONFIG key: FOTO, id: "foto", year: none, slider: false, type: geojson
+ * - Photo FOVs, LAYER_CONFIG key: FOTO_FOV, id: "foto_fov", year: none, slider: true, type: geojson
+ * - Photo Lines, LAYER_CONFIG key: FOTO_LINE, id: "foto_line", year: none, slider: true, type: geojson
+ * - Single Photo Origin, LAYER_CONFIG key: PHOTO_ORIGIN, id: "photo_origin", year: none, visible: false, type: geojson
+ * - Single Photo FOV, LAYER_CONFIG key: PHOTO_FOV, id: "photo_fov", year: none, visible: false, type: geojson
+ * - Single Photo Line, LAYER_CONFIG key: PHOTO_LINE, id: "photo_line", year: none, visible: false, type: geojson
+ *
+ * Key parameters per layer:
+ * - id: Unique string for referencing the layer
+ * - year: Only present for historical rasters (enables timeline slider)
+ * - type: "basemap" or "overlay"
+ * - layerType: "tile", "georaster", "image", or "geojson"
+ * - slider: true if layer supports opacity slider/timeline
+ * - visible: true if shown by default
+ * - grayscale: true for grayscale rendering (some rasters)
+ * - imageBounds: [latlng array] for image overlays
+
+ *  
  */
 
 // Constants and configuration for the map and layers

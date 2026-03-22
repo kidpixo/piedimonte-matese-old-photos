@@ -48,6 +48,10 @@ Se possiedi informazioni, documenti, foto o ricordi legati al Cotonificio Egg, s
 
 Se desideri collaborare al progetto, proporre ricerche o suggerire integrazioni, saremo felici di ascoltare i tuoi contributi.
 
+Potete trovarmi su [mastodon](https://mastodon.uno/deck/@kidpixo) , su [telegram](https://web.telegram.org/) come `@mariodamore` emolto raramente su [facebook](https://www.facebook.com/mario.damore77).
+
+Per contatti diretti scrivete a `kidpixo at gmail punto com` (non c'è il link diretto per evitare spam).
+
 ---
 
 *Dedicheremo sempre spazio a chi vuole partecipare a questo viaggio nella memoria collettiva di Piedimonte Matese.*
