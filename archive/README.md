@@ -6,8 +6,17 @@ Links:
 
 ## PLACEHOLDER
 
-Link [foto](https://www.facebook.com/photo/?fbid=)
-![foto]()
+Link [facebook](https://www.facebook.com/photo/?fbid=)
+![originale]()
+![restored]()
+
+- **Daniela Mastrolorenzo** : ruderi delle Manifatture a Piazza Carmine dopo il bombardamento  
+
+## Edificio_Maetranze_da_PiazzaCarmine
+
+Link [facebook](https://www.facebook.com/photo/?fbid=812356462139902)
+![foto](Edificio_Maetranze_da_PiazzaCarmine.jpg)
+![restored](Edificio_Maetranze_da_PiazzaCarmine-restored.jpg)
 
 ## Panorama_Piedimonte_da_MonteCila_tubi_anni60.jpg
 
@@ -59,16 +68,6 @@ Link [foto](https://www.facebook.com/photo/?fbid=1325412649632335)
 
 ![](Piazza_Carmine-anni-1940-1950.jpg)
 Link [Facebook](https://www.facebook.com/photo?fbid=1610405125902658&set=gm.396614293864589)
-
-
-## Via_CarmineMacerie_Scale.jpg
-
-Link [Via_CarmineMacerie_Scale.jpg](https://www.facebook.com/photo/?fbid=)
-
-1. ![Via_CarmineMacerie_Scale.jpg](Via_CarmineMacerie_Scale.jpg)
-2. ![Via_CarmineMacerie_Scale_restored.jpg](Via_CarmineMacerie_Scale_restored.jpg)
-3. ![Via_CarmineMacerie_Scale_restored_color.jpg](Via_CarmineMacerie_Scale_restored_color.jpg)
-4. ![Via_CarmineMacerie_Scale_restored_pro.jpg](Via_CarmineMacerie_Scale_restored_pro.jpg)
 
 
 ## Sepicciano_inizio_1920_2.jpg 

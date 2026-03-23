@@ -14,7 +14,7 @@ images:
     note: "Main historical shot"
     alt: "Piazza Carmine,processione dal Ponte S.Lucia verso ruderi Cotonificio,anni 60"
 
-  - file: "PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60_restored.jpg"
+  - file: "PiazzaCarmine_processione_dal_Ponte_SLucia_verso_ruderiCotonificio_anni60-restored.jpg"
     is_primary: true
     type: "restoration"
     note: "restored version"
@@ -33,7 +33,7 @@ labels:
 
 Questa fotografia restaurata documenta un momento particolarmente significativo della vita di Piedimonte Matese: la processione di San Marcellino che attraversa Via Carmine, probabilmente scendendo dal Ponte di Santa Lucia verso l’area dei ruderi del vecchio cotonificio. Lo scatto sembra risalire con buona probabilità alla seconda metà degli anni Cinquanta, intorno al 1958, e restituisce uno spaccato vivido della città in una fase di transizione tra il dopoguerra e le trasformazioni urbanistiche dei decenni successivi.
 
-Alcuni dettagli presenti nell’immagine aiutano a collocarla nel tempo. Sulla destra si intravede un manifesto dedicato a **Trottolino**, il popolare personaggio dei fumetti creato da [Giorgio Rebuffi](https://it.wikipedia.org/wiki/Giorgio_Rebuffi), la cui diffusione nelle province italiane raggiunse il suo momento di maggiore popolarità proprio negli anni Cinquanta. Accanto a questo compare l’insegna della [Liquigas](https://it.wikipedia.org/wiki/Liquigas), simbolo di una modernità domestica allora in espansione: la distribuzione di gas in bombole stava infatti cambiando le abitudini quotidiane anche nei centri montani del Matese.
+Alcuni dettagli presenti nell’immagine aiutano a collocarla nel tempo. Sulla destra si intravede un manifesto dedicato a **Trottolino**, il popolare personaggio dei fumetti creato da [Giorgio Rebuffi](https://it.wikipedia.org/wiki/Giorgio-rebuffi), la cui diffusione nelle province italiane raggiunse il suo momento di maggiore popolarità proprio negli anni Cinquanta. Accanto a questo compare l’insegna della [Liquigas](https://it.wikipedia.org/wiki/Liquigas), simbolo di una modernità domestica allora in espansione: la distribuzione di gas in bombole stava infatti cambiando le abitudini quotidiane anche nei centri montani del Matese.
 
 La scena è dominata dalla processione dedicata al patrono cittadino. Gli uomini partecipano indossando abiti scuri e formali, espressione di un’eleganza sobria tipica del periodo del boom economico nascente. A scortare il simulacro del santo vi sono i Carabinieri in alta uniforme, con la caratteristica bandoliera, presenza tradizionale nelle grandi feste patronali del Mezzogiorno. Anche l’assetto liturgico riflette un’epoca precedente alle riforme del [Concilio Vaticano II](https://it.wikipedia.org/wiki/Concilio_Vaticano_II): il clero e i chierichetti indossano vesti preconciliari e la statua del santo procede sotto un baldacchino, secondo una ritualità solenne e fortemente codificata.
 

@@ -4,6 +4,16 @@ Links:
 
 - [https://unblurimage.ai/old-photo-restoration/](https://unblurimage.ai/old-photo-restoration/)
 
+## Via_CarmineMacerie_Scale.jpg
+
+Link [Via_CarmineMacerie_Scale.jpg](https://www.facebook.com/photo/?fbid=)
+
+1. ![Via_CarmineMacerie_Scale.jpg](Via_CarmineMacerie_Scale.jpg)
+2. ![Via_CarmineMacerie_Scale_restored.jpg](Via_CarmineMacerie_Scale_restored.jpg)
+3. ![Via_CarmineMacerie_Scale_restored_color.jpg](Via_CarmineMacerie_Scale_restored_color.jpg)
+4. ![Via_CarmineMacerie_Scale_restored_pro.jpg](Via_CarmineMacerie_Scale_restored_pro.jpg)
+
+
 ## Ciminiera_cotonificio_dalla_pretura.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=238673804250859)
