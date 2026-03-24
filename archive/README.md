@@ -309,12 +309,6 @@ Comments:
 Link [foto](https://www.facebook.com/fotodiieriedioggiPiedimonte/photos/p.262800067850033/262800067850033/)
 ![](Conveto_Carmine_Ruderi.jpg)
 
-## ponte_torano_verso_ViaGaetani_1943.jpg
-
-Link [foto](https://www.facebook.com/fotodiieriedioggiPiedimonte/photos/gm.902095479983132/262118921251481/)
-![](ponte_torano_verso_ViaGaetani_1943.jpg)
-
-
 ## ponte_torano_verso_cotonificio_1923.jpg
 
 Link [foto](https://www.facebook.com/photo/?fbid=681184335257116)
@@ -360,17 +354,6 @@ Link [foto](https://www.facebook.com/photo/?fbid=)
 Link [foto](https://www.facebook.com/photo/?fbid=1287112147976327)
 ![](Cotonificio_dalla_centrale_enel_1943.jpg)
 
-
-## Cotonificio_dalla_stazione_cannavine_pre-1920.jpg
-
-Link [foto](https://www.facebook.com/photo/?fbid=741234231383516)
-![](Cotonificio_dalla_stazione_cannavine_pre-1920.jpg)
-
--- **Concetta Altieri** : antecedente al 1920 perche' casa mia e' stata cistruita tra il 1920, 25
--- ** Foto di Ieri e di Oggi Piedimontei**:  e il suo Passato** uhm anche qui non vedo I tralicci della corrente sul torano/maretto, strano
-    -- **Daniela Mastrolorenzo**: dovevano ancora inserirli
-    -- **Mario D'Amore**: aspetta, ma io ho visto foto che pensavo piú vecchie coi tralicci. Quindi sono una roba post anni 20? hai qualche notizia a riguardo?  Sto cercando di usarli come referenza per calcolare le dimensioni di alcuni adifici dalle foto.
-    -- ** Foto di Ieri e di Oggi Piedimontei**: sappiamo di preciso che prima del 1920 perchè la casa della Signora Altieri è stata costruita dopo 1920/1925.
 
 ## Cotonificio_da_vicino_via_lupoli.jpg
 
