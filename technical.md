@@ -1,14 +1,146 @@
 ---
 layout: default
 title: Technical Architecture
+mermaid: true
 ---
+
 
 ## Overview
 
-This site is a static Jekyll project with a Python preprocessing pipeline.
+```mermaid
+flowchart TD
+    A["Archive (raw scans, notes)"] -->|curation| B["raw_data/*.md"]
+    B -->|python pipeline| C[_photos/*.md]
+    C -->|jekyll build| D[_site/]
+    D -->|static HTML| E[Browser]
+    E -->|frontmatter injected| F[myscript.js]
+    F -->|reads config| G[Leaflet Map & Overlays]
+    B -->|frontmatter| F
+    C -->|frontmatter| F
+    F -->|URL params| G
+
+```
+
 Historical material is first collected from archival scans, social-history contributions, and manual research notes, then normalized by an editor into one Markdown file per photo object inside `raw_data/`.
 Each `raw_data` entry represents a single historical record: descriptive text + structured metadata (date, labels, location geometry, and one primary image with optional variants).
 Original research material is stored in `archive/`, then curated to production level in `raw_data/` as input to the python pipeline to produce jekyll collection items in `_photos/`.
+
+This site is a static Jekyll project with a Python preprocessing pipeline and a client-side JavaScript data layer for interactive maps and overlays.
+
+**General Data Flow:**
+1. Historical and research material is curated into Markdown files in `raw_data/`, each with YAML frontmatter for metadata (title, date, labels, location, images).
+2. The Python pipeline (`scripts/process_research.py`) processes these into normalized, runtime-ready Markdown in `_photos/`, generating image assets and GeoJSON overlays.
+3. Jekyll builds the static site, rendering pages from `_photos/` and `_topics/` collections.
+4. Client-side JavaScript (notably `assets/js/myscript.js`) powers interactive maps, overlays, and UI features, reading configuration from page frontmatter and URL parameters.
+
+**Key Principles:**
+- All source data is edited in `raw_data/` (never `_photos/`).
+- All external JS/CSS dependencies are loaded via pinned CDN URLs (see `_config.yml`).
+- No backend: all state is in URLs, frontmatter, or localStorage.
+- Defensive coding: errors are logged, never silent.
+
+---
+
+## JavaScript Data Flow and Frontmatter Integration
+
+### Overview
+
+The main interactive logic is handled by `assets/js/myscript.js`, which powers the Leaflet-based maps and overlays on photo, topic, and map pages. This script is designed to:
+
+- Dynamically load map layers (tiles, rasters, images, GeoJSON) based on both page frontmatter and URL parameters.
+- Read configuration variables injected by Jekyll layouts (from page frontmatter) and merge them with runtime URL parameters for per-page and per-session customization.
+- Support topic-specific overlays and filtering, timeline sliders for historical maps, and custom controls (reset zoom, opacity, fullscreen, geolocation).
+- Ensure accessibility and robust error handling (all resource loads are checked, errors are logged, and missing/malformed data falls back to safe defaults).
+
+
+### How Frontmatter Drives JavaScript Behavior
+
+```mermaid
+flowchart LR
+        subgraph Jekyll Build
+            B1[raw_data/*.md] --frontmatter--> C1[_photos/*.md]
+            C1 --frontmatter--> D1[HTML page]
+        end
+        D1 --JS vars--> E1[myscript.js]
+        E1 --config merge--> F1[Map Initialization]
+        F1 --overlays--> G1[Leaflet Map]
+        E1 --URL params--> F1
+        D1 --user interaction--> G1
+        G1 --UI events--> E1
+```
+
+Jekyll layouts inject frontmatter variables as global JS variables (e.g., `centerLat`, `centerLng`, `zoomLevel`, `activeLayers`, `topicSlug`, `topicFeaturedPhotos`, `photoOriginGeoJson`, etc.). These are read by `myscript.js` at runtime to configure the map:
+
+- **Map Center/Zoom:**
+    - `centerLat`, `centerLng`, `zoomLevel` (from frontmatter, can be overridden by `?center=` and `?zoom=` URL params)
+- **Active Layers:**
+    - `activeLayers` (array from frontmatter, or `?layers=` URL param)
+- **Topic Context:**
+    - `topicSlug`, `topicFeaturedPhotos` (from topic page frontmatter)
+    - If present, loads overlays from topic-specific GeoJSON or filters global photo layers to only show featured photos
+- **Photo Detail Context:**
+    - `photoOriginGeoJson`, `photoFovGeoJson`, `photoLineGeoJson` (from photo page frontmatter)
+    - If present, adds overlays for the specific photo’s origin, field of view, and line of sight
+
+All these variables are set in the page’s HTML by the Jekyll layout, using Liquid templating to output the frontmatter values as JS assignments before loading `myscript.js`.
+
+
+### Data Flow in `myscript.js`
+
+```mermaid
+flowchart TD
+        subgraph Page Render
+            A1["Frontmatter (YAML)"] -->|Liquid| B1[JS Variables]
+            B1 -->|window.*| C1[myscript.js]
+            C1 -->|LAYER_CONFIG| D1[Map Layers]
+            C1 -->|GeoJSON| E1[Photo Overlays]
+            C1 -->|Timeline| F1[Slider Control]
+        end
+        C1 -->|reads URL| G1[URL Params]
+        G1 -->|override| D1
+        G1 -->|override| F1
+        D1 -->|Leaflet| H1[Map]
+        E1 -->|Leaflet| H1
+        F1 -->|Leaflet| H1
+```
+
+1. **Configuration Merge:** Reads global JS variables (from frontmatter) and merges with URL params for runtime config.
+2. **Layer Setup:** Builds a `LAYER_CONFIG` object for all map layers (basemaps, overlays, rasters, images, GeoJSON), using asset paths resolved from the Jekyll base URL.
+3. **Map Initialization:**
+     - Creates the Leaflet map with the configured center/zoom.
+     - Adds base and overlay layers as specified by config.
+     - Loads GeoJSON overlays for photos, FOVs, and lines, filtering by topic or photo as needed.
+     - Adds timeline slider if multiple historical rasters are present.
+     - Adds custom controls (reset, opacity, fullscreen, geolocation, context menu).
+4. **Frontmatter-Driven Overlays:**
+     - On photo pages, overlays are built from the `location.*_geojson` fields injected by the pipeline and passed via frontmatter.
+     - On topic pages, overlays are filtered or loaded based on `featured_photos` and topic-specific GeoJSON.
+5. **Error Handling:** All resource loads are checked; missing or malformed data falls back to defaults and logs to the console.
+
+### Example: Passing Frontmatter to JS
+
+In a Jekyll layout (e.g., `_layouts/photo.html`):
+
+```liquid
+<script>
+    var centerLat = {{ page.centerLat | default: 41.3551 }};
+    var centerLng = {{ page.centerLng | default: 14.3722 }};
+    var zoomLevel = {{ page.zoomLevel | default: 17 }};
+    var activeLayers = {{ page.activeLayers | jsonify }};
+    var photoOriginGeoJson = {{ page.location.origin_geojson | jsonify }};
+    // ...etc
+</script>
+<script src="{{ site.baseurl }}/assets/js/myscript.js"></script>
+```
+
+### Developer Notes
+
+- Never hardcode asset or API URLs in JS; always resolve from frontmatter or `_config.yml`.
+- All JS dependencies must be loaded from pinned CDN URLs with SRI hashes.
+- If a map or overlay fails to load, check the browser console for errors and verify the frontmatter variables are present and correctly formatted.
+- When adding new overlays or features, update both the JS config and the frontmatter schema as needed.
+
+---
 
 Markdown files frontmatter contains information to build the site ad the embedded leaflet maps :
 

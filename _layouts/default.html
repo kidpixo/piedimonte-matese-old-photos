@@ -28,5 +28,9 @@
     <label for="sidebar-checkbox" class="sidebar-toggle"></label>
 
     <script src='{{ site.baseurl }}/assets/js/script.js'></script>
+    <!-- add mermaid rendering support only if the page declare mermaid: true in frontmatter -->
+    {% if page.mermaid %}
+    {% include mermaid.html %}
+    {% endif %}
   </body>
 </html>
