@@ -12,7 +12,7 @@ location:
     41.35443387], [14.37193628, 41.35434028], [14.37249294, 41.35472365]]]}'
   line_of_sight_geojson: '{"type": "LineString", "coordinates": [[14.37249294, 41.35472365],
     [14.37211673, 41.354387075000005]]}'
-title: Video Isitituo Luce, anni_1920-1930-CLIP-frame_0097-restored-color.jpg
+title: Video Isitituo Luce, 1924, Torano nel Cotonificio
 images: &id001
 - file: assets/images/variants/video_cotonificio-anni_1920-1930-CLIP-frame_0097/video_cotonificio-anni_1920-1930-CLIP-frame_0097-restored.jpg
   thumb: assets/thumbs/variants/video_cotonificio-anni_1920-1930-CLIP-frame_0097/video_cotonificio-anni_1920-1930-CLIP-frame_0097-restored.jpg

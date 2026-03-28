@@ -7,7 +7,7 @@ location:
     longitude_vertex_left: 14.37229718
     latitude_vertex_right: 41.35434028
     longitude_vertex_right: 14.37193628
-title: "Video Isitituo Luce, anni_1920-1930-CLIP-frame_0097-restored-color.jpg"
+title: "Video Isitituo Luce, 1924, Torano nel Cotonificio"
 
 images:
   - file: "video_cotonificio-anni_1920-1930-CLIP-frame_0097-restored.jpg"
