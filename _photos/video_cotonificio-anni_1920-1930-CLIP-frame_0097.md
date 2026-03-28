@@ -54,7 +54,7 @@ variants:
 
 Frame estratto dal video : "L'organizzazione industriale della società anonima manifatture cotoniere meridionali. Sede in Napoli. Manifatture cotoniere meridionali."
 
-Ci troviamo nel parcheggio dell'attuale piazza carmine, il canale é il proseguimento del letto del torano in via lupoli che corre verso la ex pretura.
+Ci troviamo nel parcheggio dell'attuale piazza carmine, il canale é il proseguimento del letto del torano in via Lupoli che corre verso la ex pretura.
 L'edificio sulla sinistra é il Conservatorio delle Recluse di Napoli, sulla destra la prima filanda, entrambi costruiti nel 1819. 
 
 Dal sito dell'[Istituo Luce](page.original_url) : 
@@ -67,3 +67,18 @@ Le attività della società an. "Manifatture cotoniere meridionali" nei diversi 
 - codice filmato: **M000801**
 - Casa di produzione:**Istituto Nazionale Luce**
 - Anno di produzione: **\[1924-31\]**
+
+Descrizione spezzoni (rilevanti per Piedimonte):
+
+- compare la didascalia "quarto gruppo di stabilimento della società an. "manifatture cotoniere meridionali" per la produzione di tessuti greggi) // la filatura di Piedimonte d'Alife (Benevento)
+- acque del torrente; canale passa nei pressi degli edifici dello stabilimento (**Frame mostrato in questa pagina**)
+- all'interno del magazzino rotoli di cotone; un operaio infila nella vasca di una macchina del cotone grezzo
+- operai davanti ai telai meccanici
+- operaie i cuffia sistemano le bobine di filo di cotone
+- compare la didascalia "la tessitura di Piedimonte d'Alife"
+- operaie davanti ai telai meccanici
+- rulli della macchine in movimento
+- operaie davanti ai telai meccanici all'interno dello stabilimento
+- operaie controllano le stoffe che passano attraverso i rulli dei macchinari
+- operaie piegano le stoffe e servendosi di una pressa in legno imprimono il marchio di fabbrica e la destinazione sulle lenzuola
+- le pile di lenzuola vengono pressate con un torchio in legno per ridurne il volume; operaie si occupano della mansione
