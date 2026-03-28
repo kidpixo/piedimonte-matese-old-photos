@@ -10,6 +10,12 @@ Link [facebook](https://www.facebook.com/photo/?fbid=)
 ![originale]()
 ![restored]()
 
+## PLACEHOLDER
+
+Link [facebook](https://www.facebook.com/photo/?fbid=10220697920814312)
+![originale](Frantoio_Oleario_Piedimonte.jpg)
+![restored](Frantoio_Oleario_Piedimonte-restored.jpg)
+
 - **Daniela Mastrolorenzo** : ruderi delle Manifatture a Piazza Carmine dopo il bombardamento  
 
 ## Edificio_Maetranze_da_PiazzaCarmine

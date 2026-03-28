@@ -20,18 +20,18 @@ images: &id001
   note: Cotonificio_da_via_fossi_cannavine_pre-1920
   alt: Cotonificio_da_via_fossi_cannavine_pre-1920
   is_primary: false
-- file: assets/images/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
-  thumb: assets/thumbs/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
+- file: assets/images/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
+  thumb: assets/thumbs/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
   type: restoration
   note: Noise-reduced version
   alt: Versione denoise della stessa scena
-  is_primary: true
-- file: assets/images/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
-  thumb: assets/thumbs/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
+  is_primary: false
+- file: assets/images/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
+  thumb: assets/thumbs/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
   type: restoration
   note: colorised version
   alt: Versione coolorata della stessa scena
-  is_primary: false
+  is_primary: true
 map:
   center_lat: 41.355946
   center_lng: 14.370868
@@ -45,9 +45,9 @@ original_url: https://www.facebook.com/photo/?fbid=741234231383516
 labels:
 - cannavine
 - cotonificio
-processed_primary_image: assets/images/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
-processed_primary_thumb: assets/thumbs/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
-primary_image: Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
+processed_primary_image: assets/images/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
+processed_primary_thumb: assets/thumbs/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
+primary_image: Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
 processed_images: *id001
 variants:
 - file: assets/images/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920.jpg
@@ -55,11 +55,11 @@ variants:
   type: original
   note: Cotonificio_da_via_fossi_cannavine_pre-1920
   alt: Cotonificio_da_via_fossi_cannavine_pre-1920
-- file: assets/images/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
-  thumb: assets/thumbs/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored-color.jpg
+- file: assets/images/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
+  thumb: assets/thumbs/variants/cotonificio_dalla_stazione_cannavine_pre-1920/Cotonificio_da_via_fossi_cannavine_pre-1920-restored.jpg
   type: restoration
-  note: colorised version
-  alt: Versione coolorata della stessa scena
+  note: Noise-reduced version
+  alt: Versione denoise della stessa scena
 ---
 
 -- **Concetta Altieri** : antecedente al 1920 perche' casa mia e' stata cistruita tra il 1920, 25
