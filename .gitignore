@@ -1,5 +1,4 @@
 .coverage
-.ai/*
 tags
 scripts/__pycache__/
 **/__pycache__/
