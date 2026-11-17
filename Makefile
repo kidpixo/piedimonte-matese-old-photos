@@ -42,6 +42,18 @@ rebuild: ## Rebuild Docker image from scratch
 pytest: ## Run pytest and branches - if pytest-cov installed, coverage will popup
 	python -m pytest --cov=scripts.process_research --cov-branch
 
+test: ## Run pytest plus baseline regression comparison (ADR-007)
+	python -m pytest
+
+update-baseline: ## Regenerate tests/baseline.json after intentional output changes
+	python tests/baseline.py
+
+i18n-report: ## Translation coverage matrix: which translation_key lacks which language (ADR-010)
+	python scripts/i18n_report.py --stale
+
+i18n-scaffold: ## Create stubs for a missing language: make i18n-scaffold LANG=en
+	python scripts/i18n_report.py --scaffold $(LANG)
+
 #################################################################################
 # Self Documenting Commands                                                     #
 

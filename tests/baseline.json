@@ -1,0 +1,47 @@
+{
+  "geojson_features": {
+    "assets/maps_data/photos_fov.geojson": 12,
+    "assets/maps_data/photos_lov.geojson": 12,
+    "assets/maps_data/photos_origin.geojson": 12,
+    "assets/maps_data/topics/test-topic-ciminiera-e-ponte/fov.geojson": 4,
+    "assets/maps_data/topics/test-topic-ciminiera-e-ponte/lov.geojson": 4,
+    "assets/maps_data/topics/test-topic-ciminiera-e-ponte/origin.geojson": 4
+  },
+  "photo_permalinks": [
+    "/photos/Piazza_Carmine-anni-1940-1950/",
+    "/photos/ViaAntonioGaetani_1910/",
+    "/photos/Via_Carmine_Cotonificio/",
+    "/photos/abbattimento_ciminera_1972/",
+    "/photos/ciminiera_cotonificio_dalla_pretura/",
+    "/photos/cotonificio_dalla_stazione_cannavine_pre-1920/",
+    "/photos/cotonificio_retro_convento/",
+    "/photos/piazzacarmine_con_ciminiera/",
+    "/photos/piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60/",
+    "/photos/viaCarmine-ponte_torano_verso_piazza_carmine_1900/",
+    "/photos/via_carminemacerie_scale/",
+    "/photos/video_cotonificio-anni_1920-1930-CLIP-frame_0097/"
+  ],
+  "photos_md_count": 12,
+  "photos_slugs": [
+    "Piazza_Carmine-anni-1940-1950",
+    "ViaAntonioGaetani_1910",
+    "Via_Carmine_Cotonificio",
+    "abbattimento_ciminera_1972",
+    "ciminiera_cotonificio_dalla_pretura",
+    "cotonificio_dalla_stazione_cannavine_pre-1920",
+    "cotonificio_retro_convento",
+    "piazzacarmine_con_ciminiera",
+    "piazzacarmine_processione_dal_ponte_slucia_verso_rudericotonificio_anni60",
+    "viaCarmine-ponte_torano_verso_piazza_carmine_1900",
+    "via_carminemacerie_scale",
+    "video_cotonificio-anni_1920-1930-CLIP-frame_0097"
+  ],
+  "raw_md_count": 12,
+  "topic_permalinks": [
+    "/topics/test-topic-ciminiera-e-ponte/"
+  ],
+  "topics_md_count": 1,
+  "topics_slugs": [
+    "test-topic-ciminiera-e-ponte"
+  ]
+}

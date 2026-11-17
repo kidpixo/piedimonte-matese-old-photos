@@ -31,6 +31,7 @@ def _write_topic_markdown(path, featured_id):
     _write_text(
         path,
         f"""---
+lang: it
 title: Test Topic
 featured_photos:
   - id: {featured_id}
