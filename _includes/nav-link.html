@@ -1,0 +1,28 @@
+{% comment %}
+One sidebar nav item, resolved in the current language (ADR-010).
+
+Finds the page carrying `include.key` as its translation_key for page.lang; when
+that translation does not exist it falls back to the default-language page, so a
+nav entry never points at a missing URL.
+
+Usage: {% include nav-link.html key='storia' label=t.nav.storia %}
+       {% include nav-link.html key='map' label=t.nav.map icon=icon_map %}
+{% endcomment %}
+{% assign pool = site.pages | concat: site.topics %}
+{% assign target = nil %}
+{% for candidate in pool %}
+  {% if candidate.translation_key == include.key and candidate.lang == page.lang %}
+    {% assign target = candidate %}
+  {% endif %}
+{% endfor %}
+{% if target == nil %}
+  {% for candidate in pool %}
+    {% if candidate.translation_key == include.key and candidate.lang == site.default_lang %}
+      {% assign target = candidate %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% if target %}
+    <a class="sidebar-nav-item{% if target.url == page.url %} active{% endif %}" href="{{ target.url | relative_url }}" hreflang="{{ target.lang }}">{% if include.icon %}{{ include.icon }}
+      {% endif %}{{ include.label }}</a>
+{% endif %}

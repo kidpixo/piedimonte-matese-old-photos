@@ -1,5 +1,7 @@
 ---
 layout: topic
+lang: it
+translation_key: test-topic-ciminiera-e-ponte
 title: "Test Topic: Ciminiera e Ponte"
 date: 2026-02-25
 featured_photos:

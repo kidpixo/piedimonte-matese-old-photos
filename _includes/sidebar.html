@@ -1,3 +1,7 @@
+{% comment %}UI strings come from _data/i18n.yml (ADR-010); no literals in templates.
+Site chrome (title/tagline/description) falls back to _config.yml, which stays the
+default-language source of truth.{% endcomment %}
+{% assign t = site.data.i18n[page.lang] | default: site.data.i18n[site.default_lang] %}
 <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
      styles, `#sidebar-checkbox` the sidebar space is empty, for behavior. -->
 <input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox" {% if page.title =="Home" %}checked{% endif %}>
@@ -6,35 +10,46 @@
 <!-- Toggleable sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-item">
-    <p>{{ site.description }}</p>
+    <p>{{ t.site.description | default: site.description }}</p>
   </div>
 
   <nav class="sidebar-nav">
+    {% assign pool = site.pages | concat: site.topics %}
+    {% assign idx_photos = nil %}{% assign idx_topics = nil %}{% assign idx_labels = nil %}
+    {% for c in pool %}{% if c.lang == page.lang %}
+      {% if c.translation_key == 'photos' %}{% assign idx_photos = c %}{% endif %}
+      {% if c.translation_key == 'topics' %}{% assign idx_topics = c %}{% endif %}
+      {% if c.translation_key == 'labels' %}{% assign idx_labels = c %}{% endif %}
+    {% endif %}{% endfor %}
+    {% for c in pool %}{% if c.lang == site.default_lang %}
+      {% if c.translation_key == 'photos' and idx_photos == nil %}{% assign idx_photos = c %}{% endif %}
+      {% if c.translation_key == 'topics' and idx_topics == nil %}{% assign idx_topics = c %}{% endif %}
+      {% if c.translation_key == 'labels' and idx_labels == nil %}{% assign idx_labels = c %}{% endif %}
+    {% endif %}{% endfor %}
+    {% include lang-switcher.html %}
     <!-- Sidebar navigation items manually added -->
-    <a class="sidebar-nav-item{% if page.url == '/' %} active{% endif %}" href="{{ '/' | relative_url }}">Home</a>
-    <a class="sidebar-nav-item{% if page.url == '/storia/' %} active{% endif %}" href="{{ '/storia/' | relative_url }}">Storia</a>
-    <a class="sidebar-nav-item{% if page.url == '/about/' %} active{% endif %}" href="{{ '/about/' | relative_url }}">Chi Siamo</a>
-    <a class="sidebar-nav-item{% if page.url == '/map/' %} active{% endif %}" href="{{ '/map/' | relative_url }}">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
+    {% include nav-link.html key='index' label=t.nav.home %}
+    {% include nav-link.html key='storia' label=t.nav.storia %}
+    {% include nav-link.html key='about' label=t.nav.about %}
+    {% capture icon_map %}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m10.25 5.25v8.5m-4.5-10.5v8.5m-4 2.5v-9.5l4-2 4.5 2 4-2v9.5l-4 2-4.5-2z">
         </path>
-      </svg>
-      General Map
-    </a>
+      </svg>{% endcapture %}
+    {% include nav-link.html key='map' label=t.nav.map icon=icon_map %}
 
     <!-- Photos collection -->
     {% assign photos_active = false %}
-    {% if page.collection == 'photos' or page.url == '/photos/' %}
+    {% if page.collection == 'photos' or page.translation_key == 'photos' %}
       {% assign photos_active = true %}
     {% endif %}
     {% if site.photos.size > 0 %}
     <div class="sidebar-collection-header">
-      <a class="sidebar-nav-item{% if photos_active %} active{% endif %}" href="{{ '/photos/' | relative_url }}">
+      <a class="sidebar-nav-item{% if photos_active %} active{% endif %}" href="{{ idx_photos.url | default: '/photos/' | relative_url }}">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
           <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
           <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
         </svg>
-        Photos ({{ site.photos.size }})</a>
+        {{ t.nav.photos }} ({{ site.photos.size }})</a>
       <button class="sidebar-collapse-toggle"
               data-bs-toggle="collapse"
               data-bs-target="#sidebar-photos-list"
@@ -63,19 +78,28 @@
 
     <!-- Topics collection -->
     {% assign topics_active = false %}
-    {% if page.collection == 'topics' or page.url == '/topics/' %}
+    {% if page.collection == 'topics' or page.translation_key == 'topics' %}
       {% assign topics_active = true %}
     {% endif %}
-    {% if site.topics.size > 0 %}
+    {% comment %}ADR-010: an item with no `lang` is language-neutral and appears in every
+    language; an item that declares one appears only under its own language.{% endcomment %}
+    {% assign page_lang = page.lang | default: site.default_lang %}
+    {% assign topics_visible = "" | split: "" %}
+    {% for topic in site.topics %}
+      {% unless topic.lang and topic.lang != page_lang %}
+        {% assign topics_visible = topics_visible | push: topic %}
+      {% endunless %}
+    {% endfor %}
+    {% if topics_visible.size > 0 %}
     <div class="sidebar-collection-header">
-      <a class="sidebar-nav-item{% if topics_active %} active{% endif %}" href="{{ '/topics/' | relative_url }}">
+      <a class="sidebar-nav-item{% if topics_active %} active{% endif %}" href="{{ idx_topics.url | default: '/topics/' | relative_url }}">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-image" viewBox="0 0 20 20"> 
         <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
           <path d="m7.5 9l-3 .54L5 6.5L10.73.79a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1 0 1.42Z"></path>
           <path d="M12 9.5v3a1 1 0 0 1-1 1H1.5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h3"></path>
         </g>
         </svg>
-        Topics ({{ site.topics.size }})</a>
+        {{ t.nav.topics }} ({{ topics_visible.size }})</a>
       <button class="sidebar-collapse-toggle"
               data-bs-toggle="collapse"
               data-bs-target="#sidebar-topics-list"
@@ -84,7 +108,7 @@
     </div>
     <div class="collapse{% if topics_active %} show{% endif %}" id="sidebar-topics-list">
       <ul class="sidebar-nav-sublist">
-        {% assign topics_sorted = site.topics | sort: "title" %}
+        {% assign topics_sorted = topics_visible | sort: "title" %}
         {% for topic in topics_sorted %}
           <li>
             <a class="sidebar-nav-item{% if page.url == topic.url %} active{% endif %}" href="{{ topic.url | relative_url }}">{{ topic.title }}</a>
@@ -96,7 +120,7 @@
 
     <!-- Labels / Tags -->
     {% assign labels_active = false %}
-    {% if page.url == '/labels/' %}
+    {% if page.translation_key == 'labels' %}
       {% assign labels_active = true %}
     {% endif %}
     {% assign all_labels = "" | split: "" %}
@@ -111,11 +135,11 @@
     {% endfor %}
     {% if all_labels.size > 0 %}
     <div class="sidebar-collection-header">
-      <a class="sidebar-nav-item{% if labels_active %} active{% endif %}" href="{{ '/labels/' | relative_url }}">
+      <a class="sidebar-nav-item{% if labels_active %} active{% endif %}" href="{{ idx_labels.url | default: '/labels/' | relative_url }}">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tag-fill" viewBox="0 0 16 16">
           <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
         </svg>
-        Labels ({{ all_labels.size }})</a>
+        {{ t.nav.labels }} ({{ all_labels.size }})</a>
       <button class="sidebar-collapse-toggle"
               data-bs-toggle="collapse"
               data-bs-target="#sidebar-labels-list"
@@ -134,20 +158,21 @@
             {% endif %}
           {% endfor %}
           <li>
-            <a class="sidebar-nav-item" href="{{ '/labels/' | relative_url }}?tag={{ label_slug }}">{{ label }} ({{ label_count }})</a>
+            <a class="sidebar-nav-item" href="{{ idx_labels.url | default: '/labels/' | relative_url }}?tag={{ label_slug }}">{{ label }} ({{ label_count }})</a>
           </li>
         {% endfor %}
       </ul>
     </div>
     {% endif %}
       
-    <a class="sidebar-nav-item{% if page.url == '/technical/' %} active{% endif %}" href="{{ '/technical/' | relative_url }}">
+    <!-- technical.md is monolingual English (no translation_key): same URL in every language -->
+    <a class="sidebar-nav-item{% if page.url == '/technical/' %} active{% endif %}" href="{{ '/technical/' | relative_url }}" hreflang="en" title="{{ site.data.i18n.en.label }}">
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" fill="currentColor"  fill-rule="evenodd" class="bi bi-image"  width="20" height="20" viewBox="0 0 56 56">
         <path d="M22.792 51.433a23.9 23.9 0 0 1-6.878-2.694l.124-2.425c.169-3.307-2.384-5.85-5.682-5.682l-2.68.137a23.9 23.9 0 0 1-2.854-6.517l2.104-1.9c2.458-2.218 2.452-5.822 0-8.035l-2.243-2.025A23.9 23.9 0 0 1 7.28 15.88l3.076.157c3.307.169 5.85-2.384 5.682-5.682L15.88 7.28a23.9 23.9 0 0 1 6.41-2.597l2.026 2.243c2.22 2.458 5.823 2.452 8.036 0l1.9-2.104a23.9 23.9 0 0 1 6.516 2.853l-.137 2.68c-.169 3.308 2.384 5.851 5.682 5.683l2.425-.124a23.9 23.9 0 0 1 2.694 6.878l-1.69 1.525c-2.457 2.22-2.45 5.823 0 8.036l1.561 1.408a23.9 23.9 0 0 1-2.958 6.975l-2.032-.104c-3.307-.169-5.85 2.384-5.682 5.682l.104 2.032a23.9 23.9 0 0 1-6.975 2.958l-1.408-1.56c-2.22-2.458-5.823-2.452-8.036 0zM28 38c5.523 0 10-4.477 10-10s-4.477-10-10-10s-10 4.477-10 10s4.477 10 10 10">
       </path>
     </svg>
-      Technical (ENG)</a>
-    <span class="sidebar-nav-item">Currently v{{ site.version }}</span>
+      {{ t.nav.technical }}</a>
+    <span class="sidebar-nav-item">{{ t.nav.version }} v{{ site.version }}</span>
   </nav>
 
   <div class="sidebar-item">

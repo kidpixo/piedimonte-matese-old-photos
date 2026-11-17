@@ -1,14 +1,17 @@
 <head>
+  {% assign t = site.data.i18n[page.lang] | default: site.data.i18n[site.default_lang] %}
+  {% assign site_title = t.site.title | default: site.title %}
+  {% assign site_tagline = t.site.tagline | default: site.tagline %}
   <link href="http://gmpg.org/xfn/11" rel="profile">
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 
   <title>
-    {% if page.title == "Home" %}
-      {{ site.title }} &middot; {{ site.tagline }}
+    {% if page.translation_key == 'index' %}
+      {{ site_title }} &middot; {{ site_tagline }}
     {% else %}
-      {{ page.title }} &middot; {{ site.title }}
+      {{ page.title }} &middot; {{ site_title }}
     {% endif %}
   </title>
 

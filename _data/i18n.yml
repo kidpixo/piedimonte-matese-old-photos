@@ -1,0 +1,87 @@
+# UI strings per language (ADR-010). Layouts read:
+#   {% assign t = site.data.i18n[page.lang] | default: site.data.i18n[site.default_lang] %}
+# so a missing key or language falls back to Italian rather than rendering empty.
+#
+# `site:` (title / tagline / description) is optional per language: omit it and
+# _config.yml supplies the default-language wording, so _config.yml stays the
+# Italian source of truth instead of being duplicated here.
+#
+# Editorial content does NOT live here — it lives in the page/topic files.
+# Only interface chrome belongs in this file.
+
+it:
+  label: Italiano
+  nav:
+    home: Home
+    storia: Storia
+    about: Chi Siamo
+    map: Mappa Generale
+    photos: Foto
+    topics: Temi
+    labels: Etichette
+    technical: Tecnico (ENG)
+    version: "Versione attuale"
+  photos_index:
+    title: Foto
+    heading: Archivio fotografico
+  topics_index:
+    heading: Temi
+  labels_index:
+    heading: Etichette
+  switcher:
+    label: Lingua
+    unavailable: "Disponibile solo in italiano"
+
+en:
+  label: English
+  site:
+    title: "The Egg Cotton Mill of Piedimonte Matese"
+    tagline: "An Industrial and Social History Through Maps"
+    description: "The history of the Egg Cotton Mill of Piedimonte Matese, exploring its industrial and social evolution through interactive maps and historical data."
+  nav:
+    home: Home
+    storia: History
+    about: About
+    map: General Map
+    photos: Photos
+    topics: Topics
+    labels: Labels
+    technical: Technical
+    version: "Current version"
+  photos_index:
+    title: Photos
+    heading: Photo archive
+  topics_index:
+    heading: Topics
+  labels_index:
+    heading: Labels
+  switcher:
+    label: Language
+    unavailable: "Italian only"
+
+de:
+  label: Deutsch
+  site:
+    title: "Die Egg-Baumwollspinnerei in Piedimonte Matese"
+    tagline: "Eine Industrie- und Sozialgeschichte in Karten"
+    description: "Die Geschichte der Egg-Baumwollspinnerei in Piedimonte Matese, entdeckt anhand interaktiver Karten und historischer Daten."
+  nav:
+    home: Startseite
+    storia: Geschichte
+    about: Über uns
+    map: Gesamtkarte
+    photos: Fotos
+    topics: Themen
+    labels: Schlagwörter
+    technical: Technik (ENG)
+    version: "Aktuelle Version"
+  photos_index:
+    title: Fotos
+    heading: Fotoarchiv
+  topics_index:
+    heading: Themen
+  labels_index:
+    heading: Schlagwörter
+  switcher:
+    label: Sprache
+    unavailable: "Nur auf Italienisch"

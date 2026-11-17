@@ -1,4 +1,6 @@
 ---
+lang: it
+translation_key: about
 layout: page
 title: Chi Siamo
 ---

@@ -1,4 +1,6 @@
 ---
+lang: it
+translation_key: index
 layout: default
 title: Il Cotonificio Egg di Piedimonte Matese
 ---

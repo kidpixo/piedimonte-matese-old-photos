@@ -8,23 +8,23 @@ layout: default
 {% endif %}
 
 {% if map_enabled %}
-  <link href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <link href="{{ site.cdn_libs.leaflet_css }}" rel="stylesheet" />
+  <script src="{{ site.cdn_libs.leaflet_js }}"></script>
 
   <link href="{{ '/assets/css/map.css' | relative_url }}" rel="stylesheet"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@3.10.0/dist/v3/webpack/bundle/georaster-layer-for-leaflet.min.js"></script>
+  <script src="{{ site.cdn_libs.georaster }}"></script>
+  <script src="{{ site.cdn_libs.georaster_layer }}"></script>
 
   <!-- Add the Bing plugin script -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-bing-layer@3.3.1/leaflet-bing-layer.min.js"></script>
+  <script src="{{ site.cdn_libs.leaflet_bing }}"></script>
 
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.min.js"></script>
+  <link href="{{ site.cdn_libs.leaflet_locate_css }}" rel="stylesheet" />
+  <script src="{{ site.cdn_libs.leaflet_locate_js }}"></script>
 
   <!-- Add the Leaflet Fullscreen plugin -->
-  <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
-  <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+  <script src="{{ site.cdn_libs.leaflet_fullscreen_js }}"></script>
+  <link href="{{ site.cdn_libs.leaflet_fullscreen_css }}" rel="stylesheet" />
 
   <!-- Pass variables from page frontmatter to Javascript -->
   <script>
@@ -106,6 +106,25 @@ layout: default
           {% endif %}
         {% endunless %}
       {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if page.dating or page.precision or page.source %}
+    <section class="photo-provenance" style="margin: 1.25rem 0;">
+      <h3>Provenienza e datazione</h3>
+      <ul style="list-style: none; padding-left: 0;">
+        {% if page.dating %}
+          <li><strong>Datazione:</strong> {{ page.dating }}</li>
+        {% endif %}
+        {% if page.precision %}
+          <li><strong>Precisione:</strong> {{ page.precision }}</li>
+        {% endif %}
+        {% if page.source %}
+          <li><strong>Fonte:</strong>
+            {% if page.source.type %}({{ page.source.type }}) {% endif %}{{ page.source.ref | default: page.source }}
+          </li>
+        {% endif %}
+      </ul>
     </section>
   {% endif %}
   {{ content }}

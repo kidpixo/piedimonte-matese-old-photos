@@ -624,3 +624,46 @@ a.pagination-item:hover {
   border-bottom: none;
   border-top: 1px solid rgba(255,255,255,.05);
 }
+
+/*
+ * Language switcher (ADR-010)
+ * Rendered by _includes/lang-switcher.html as inline siblings, so the items need
+ * explicit separation; the current language is a <span>, the others are links.
+ */
+.lang-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  padding: .5rem 1rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+  font-size: .875em;
+}
+.lang-switcher-item + .lang-switcher-item {
+  margin-left: .6rem;
+  padding-left: .6rem;
+  border-left: 1px solid rgba(255,255,255,.25);
+}
+a.lang-switcher-item:hover,
+a.lang-switcher-item:focus {
+  color: #fff;
+  text-decoration: underline;
+}
+.lang-switcher-item.is-current {
+  font-weight: 600;
+}
+.lang-switcher-note {
+  display: block;
+  margin: 0;
+  padding: .5rem 1rem;
+  border-top: 1px solid rgba(255,255,255,.1);
+  font-size: .8125em;
+  font-style: italic;
+  color: rgba(255,255,255,.5);
+}
+@media (min-width: 48em) {
+  .lang-switcher,
+  .lang-switcher-note {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}

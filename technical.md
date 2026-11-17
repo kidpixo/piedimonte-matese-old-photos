@@ -1,4 +1,5 @@
 ---
+lang: en
 layout: default
 title: Technical Architecture
 mermaid: true
@@ -271,8 +272,8 @@ Photo layout behavior:
 - Loads map scripts/styles only when coordinate data is available.
 
 ### `topics` collection
-- Declared in `_config.yml` with permalink `/topics/:slug/`.
-- Source files live in `_topics/` and are editorial/manual.
+- Declared in `_config.yml` with permalink `/:path/` (ADR-010): the folder under `_topics/` is part of the URL.
+- Source files live in a language folder inside `_topics/` (`_topics/topics/` for Italian, `_topics/en/topics/` for English) and are editorial/manual.
 - Topic pages use `_layouts/topic.html`.
 
 Topic-photo join model:
@@ -287,6 +288,152 @@ featured_photos:
     - id: via-carmine-cotonificio
         commentary: "Historical relation to the square."
 ```
+
+---
+
+## Internationalization (i18n / l10n)
+
+Implemented per ADR-010. The build stays a plain Jekyll 3 build on GitHub Pages: no i18n plugin (the Pages dependency whitelist does not carry one), no per-language build matrix, no runtime language detection or cookie. Two conventions carry all the meaning.
+
+### The two rules
+
+1. **The folder is the language.** The first path segment of a page, relative to the site root or to its collection root, is the language code.
+2. **`translation_key` is the identity.** Two files are translations of each other when they share a `translation_key` — never because they share a filename or a URL suffix.
+
+```mermaid
+flowchart LR
+    A["storia.md<br/>lang: it<br/>translation_key: storia"] -->|"permalink: pretty"| B["/storia/"]
+    C["en/storia.md<br/>lang: en<br/>translation_key: storia"] -->|"permalink: pretty"| D["/en/storia/"]
+    E["_topics/topics/x.md<br/>lang: it"] -->|"collection permalink /:path/"| F["/topics/x/"]
+    G["_topics/en/topics/x.md<br/>lang: en"] -->|"collection permalink /:path/"| H["/en/topics/x/"]
+```
+
+| Source file | URL | Note |
+|---|---|---|
+| `index.md` | `/` | the default-language home page |
+| `en/index.md` | `/en/` | `index` collapses into its folder: the English home is `/en/`, never `/en/index/` |
+| `storia.md` | `/storia/` | root pages keep their historical URL |
+| `en/storia.md` | `/en/storia/` | |
+| `de/storia.md` | `/de/storia/` | |
+| `_topics/topics/x.md` | `/topics/x/` | collection items must live in a folder |
+| `_topics/en/topics/x.md` | `/en/topics/x/` | |
+
+A translated home page is therefore just `en/index.md`: no permalink, no config change. The switcher picks up the sibling, and the sidebar Home link resolves to `/en/` while browsing English and to `/` otherwise.
+
+`it` is the default language: it stays at the unprefixed URL, so every published link keeps working. `_config.yml` holds this choice once as `default_lang`, and `scripts/process_research.py` mirrors it as `DEFAULT_LANG`.
+
+### Why folders instead of `:lang` permalinks
+
+Jekyll 3.9 expands only `:collection`, `:path`, `:name`, `:slug`, `:title`, `:output_ext` and the date tokens in a permalink template. `:lang` is not a placeholder: a template mentioning it aborts the build with *"The URL template doesn't have lang keys"*.
+
+The `topics` collection therefore uses `permalink: /:path/`. Two properties of `:path` shape the convention:
+
+- `:path` is the subdirectory **plus the filename**, so `/:path/` reproduces the old `/topics/<slug>/` for files in `_topics/topics/` and produces `/en/topics/<slug>/` for files in `_topics/en/topics/`.
+- `:path` is **not slugified**: filenames must already be URL-safe (lowercase, dashes, no accents, no spaces).
+
+The alternative, a per-file `permalink:` in every translated file, also works but fails silently: forget it once and the page publishes at the wrong URL. Forgetting a language folder is structurally impossible, because the URL is derived from where the file lives.
+
+### Front matter contract
+
+| Key | Required | Meaning |
+|---|---|---|
+| `lang` | on every content page | one of `it`, `en`, `de` (`SUPPORTED_LANGS` in `scripts/process_research.py`) |
+| `translation_key` | on translatable pages | stable identifier shared by all languages of one page; never reuse it for a different page |
+
+`lang` must agree with the folder: a file outside any language folder is `default_lang`, and `en/…` must declare `lang: en`. A mismatch is reported by `--check`, not discovered in production.
+
+### Monolingual pages
+
+A page with **no `translation_key`** belongs to no translation group, so it may declare any `lang` and sit anywhere. `technical.md` uses this: it is `lang: en` at the root, published at `/technical/` for every reader. Reserve this for pages that are genuinely not translated; anything a reader expects in their language needs a `translation_key` and one folder per language.
+
+Repository documents (`README.md`, `AGENTS.md`, `LICENSE.md`, …) are excluded from the page scan (`NON_PAGE_MARKDOWN` in the pipeline) and need no `lang`.
+
+Two pages take this route for different reasons. `technical.md` is English-only by editorial choice. `404.md` cannot be translated at all: the host serves that one file for every missing URL, whatever language the reader was browsing, so giving it a `translation_key` would leave a permanent phantom gap in the coverage report. It also carries an explicit `permalink: 404.html` — the one legitimate exception to the no-permalink rule, since the host, not the folder, dictates that name.
+
+### Adding a translation
+
+1. Copy the source file into the language folder, keeping the same name: `storia.md` → `en/storia.md`. To create every missing file for one language at once, use `make i18n-scaffold LANG=en`.
+2. Set `lang: en`; keep `translation_key` unchanged.
+3. Translate the body. Do not duplicate shared data (coordinates, dates, labels) into the front matter: those live in `raw_data/` and are referenced, not copied.
+4. For a topic, place it under the collection folder: `_topics/en/topics/<same-filename>.md`.
+5. Run `python scripts/process_research.py --check`: it reports missing languages, duplicate languages, folder/`lang` mismatches, and keys with no default-language version.
+
+### UI strings
+
+Interface labels live in `_data/i18n.yml`, one dictionary per language, and templates contain no literals:
+
+```yaml
+it:
+  label: Italiano
+  nav:
+    home: Home
+    photos: Foto
+```
+
+`_includes/sidebar.html` resolves `t = site.data.i18n[page.lang]`, falling back to `site.data.i18n[site.default_lang]`, and renders every label from `t`. Adding a language means adding one dictionary and one folder; no template changes.
+
+Long editorial text does **not** belong here: it belongs in a translated page.
+
+**Site chrome is localized the same way.** `site.title`, `site.tagline` and `site.description` come from `_config.yml` and are Italian, so a language that wants different wording adds a `site:` block to its dictionary:
+
+```yaml
+en:
+  site:
+    title: "The Egg Cotton Mill of Piedimonte Matese"
+    tagline: "An Industrial and Social History Through Maps"
+    description: "The history of the Egg Cotton Mill of Piedimonte Matese, …"
+```
+
+Templates read `t.site.title | default: site.title`, so omitting the block falls back to `_config.yml` instead of rendering empty. That keeps `_config.yml` the default-language source of truth rather than a duplicate of `it:`. The three consumers are the masthead (`_layouts/default.html`), the sidebar description (`_includes/sidebar.html`) and the browser tab (`_includes/head.html`); `atom.xml` deliberately keeps the Italian title, since the feed is a single-language artefact.
+
+The tab title on a home page uses the site title and tagline, selected by `page.translation_key == 'index'` rather than by comparing `page.title` to a literal `"Home"`, so it works in every language.
+
+### Navigation and fallback
+
+- **Language switcher** (`_includes/lang-switcher.html`) groups `site.pages` and `site.topics` by `translation_key` and links to the siblings that exist, listed default-language first and then alphabetically. With no sibling it renders `switcher.unavailable` ("Disponibile solo in italiano") instead of a link. A missing translation is never a 404. The markup is a bare sequence of inline items — spacing, the divider between languages and the emphasis on the current one live in `assets/css/lanyon.css` under `.lang-switcher`, not in the template.
+- **Sidebar links** (`_includes/nav-link.html`) resolve each target by `translation_key` plus `page.lang`, and fall back to the default-language page. An English page therefore links to `/en/storia/` where it exists and to `/storia/` where it does not.
+- **Listings** (sidebar topic list, `topics.md`) show an item with no `lang` in every language, and an item that declares one only under its own language. Language-neutral data, such as generated photos today, is visible everywhere; once photos carry `lang`, the photo and label indexes need the same filter.
+
+### Checking coverage
+
+`--check` answers *is anything wrong*. `scripts/i18n_report.py` answers *what is not written yet*: it prints the translation graph, one row per `translation_key`, one column per target language.
+
+```text
+Target languages: it (default), en, de
+
+PAGES
+  translation_key  it  en  de  missing
+  about            x   -   -   en, de
+  storia           x   -   -   en, de
+
+MONOLINGUAL (no translation_key: one URL, every language)
+  404.md  [it]  /404.html
+  technical.md  [en]  /technical/
+
+SUMMARY
+  keys=8  complete=0/8  missing_edges=16
+```
+
+Target languages come from `_data/i18n.yml`, so the report asks for exactly the languages the interface promises, in the order declared there.
+
+- `make i18n-report` adds `--stale`: translations whose last commit predates their Italian source, i.e. translations that have drifted behind.
+- `--format md` produces tables for an issue; `--format json` produces the raw graph.
+- `make i18n-scaffold LANG=en` writes the missing files with the source front matter and body copied, ready to translate in place. It never overwrites an existing file.
+- `--fail-on-missing` makes the report a CI gate (exit 1).
+
+The script imports `iter_page_files()`, `iter_topic_files()` and the folder rules from the pipeline, so the report and `--check` cannot disagree about what a language folder means.
+
+**Scaffolding is a starting point, not a publishable state.** A scaffolded file copies the Italian body under `lang: en`, so publishing it as-is would serve Italian at an `/en/` URL — the exact failure the folder convention exists to prevent. Create the stubs when the translation will follow immediately; `--check` cannot tell a copied body from a translated one, only a human can.
+
+**Staleness reads git history, not file timestamps.** `--stale` compares the last commit touching each translation with the last commit touching its default-language source. A file with no commit yet is skipped — there is nothing to compare — and a fresh clone with rewritten mtimes produces no false positives.
+
+### Scope boundaries
+
+Deliberately not implemented:
+
+- `hreflang` alternates, localized sitemap entries and language-aware search: SEO is out of scope.
+- Italian literals still hardcoded in `assets/js` and in the DataTables configuration. Extracting them into `_data/i18n.yml` is a one-time mechanical pass, not yet done.
+- Localized photo records: `_photos/` is generated and carries no `lang`.
 
 ---
 
@@ -344,6 +491,29 @@ Most dependencies are loaded from pinned CDN versions. This keeps the project co
 
 This separation reduces drift and preserves reproducibility.
 
+### What Jekyll does not see
+
+`_config.yml` `exclude` names every path that is not site content: the data and tooling directories (`raw_data/`, `scripts/`, `tests/`, `archive/`), the repository documents (`README.md`, `AGENTS.md`, `LICENSE.md`) and the build files (`Gemfile`, `pytest.ini`, `requirements.txt`, `docker-*`, `tags`).
+
+Two parts of that list are not obvious:
+
+- **Dot-directories have to be named even though Jekyll skips them.** The reader ignores anything starting with `.`, so `.ai/` and `.agents/` never reached `_site/` — but the `--watch` listener does not apply the same rule, so editing `.ai/01_STRUCTURE.md` triggered a full regeneration. Listing them in `exclude` silences the watcher; content pages still regenerate normally.
+- **Excluding a document removes its URL.** `README.md`, `AGENTS.md` and `LICENSE.md` used to be published as `/README.md`, `/AGENTS/` and `/LICENSE.md`, and `tests/` published the Python sources. Those paths now 404; nothing on the site linked to them.
+
+### Sanity checkers
+
+The checkers answer two different questions. `--check`, `make test` and `leansdd-check.py` ask *is anything wrong*: they are silent while the repository is consistent. `i18n_report.py` asks *what is missing*: it is worth reading even when everything passes, because an untranslated page is not an error but unfinished work. Run the first group before committing, the second when deciding what to write next.
+
+| Command | What it verifies | Fails when |
+|---|---|---|
+| `python scripts/process_research.py --check` | `raw_data/` frontmatter against `raw_data/schema.json`, image and thumbnail presence, GeoJSON validity, orphan generated files, the i18n graph (ADR-010) | errors are reported (non-zero exit); warnings too with `--strict-warnings` |
+| `make test` → `python -m pytest` | unit tests plus the output regression snapshot in `tests/test_baseline.py` | current output diverges from `tests/baseline.json` |
+| `python tests/baseline.py` | prints the current observable state; `make update-baseline` records it as the new reference | never (it is the recorder) |
+| `python scripts/i18n_report.py` | translation coverage per `translation_key`, stale translations | audit errors; missing translations with `--fail-on-missing` |
+| `python3 .ai/scripts/leansdd-check.py` | Lean SDD structure of `.ai/` (framework docs, not site data) | structural errors in `.ai/` |
+
+The first four guard repository data; the last guards the process documentation. `scripts/rangeserver.py` is not a checker: it serves files with HTTP Range support for testing Cloud-Optimized GeoTIFF access.
+
 ---
 
 ## Notes for Technical Contributors
@@ -353,4 +523,5 @@ This separation reduces drift and preserves reproducibility.
 - Validate image-file existence in `raw_data/` before running the pipeline.
 - If map overlays fail, inspect `location.*_geojson` fields in generated `_photos/*.md` and check browser console for CDN load errors.
 - For topic link issues, verify `featured_photos[].id` exactly matches photo slug in `_photos/`.
+- When adding a page, place it in its language folder and declare `lang` plus `translation_key` (see Internationalization); never add a per-file `permalink:` to a translatable page.
 

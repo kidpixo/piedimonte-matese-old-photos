@@ -1,4 +1,6 @@
 ---
+lang: it
+translation_key: map
 layout: map
 title: General Map
 map:

@@ -1,0 +1,41 @@
+{% comment %}
+Language switcher (ADR-010).
+
+Groups pages by `translation_key` (never by filename or URL) and links to every
+translation that exists. A page with no siblings renders the explicit
+"unavailable" note instead of a link, so a missing translation is never a 404.
+{% endcomment %}
+{% assign t = site.data.i18n[page.lang] | default: site.data.i18n.it %}
+{% assign pool = site.pages | concat: site.topics %}
+{% assign siblings = "" | split: "" %}
+{% assign others = "" | split: "" %}
+{% if page.translation_key %}
+  {% for candidate in pool %}
+    {% if candidate.translation_key == page.translation_key %}
+      {% if candidate.lang == site.default_lang %}
+        {% assign siblings = siblings | push: candidate %}
+      {% else %}
+        {% assign others = others | push: candidate %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% comment %}site.pages is ordered by source path, which would put /de/ before the
+  default-language page; keep the default first, then the rest alphabetically.{% endcomment %}
+  {% assign others = others | sort: "lang" %}
+  {% assign siblings = siblings | concat: others %}
+{% endif %}
+
+{% if siblings.size > 1 %}
+<nav class="lang-switcher" aria-label="{{ t.switcher.label }}">
+  {% for sibling in siblings %}
+    {%- assign sibling_label = site.data.i18n[sibling.lang].label | default: sibling.lang -%}
+    {%- if sibling.lang == page.lang -%}
+      <span class="lang-switcher-item is-current" aria-current="true">{{ sibling_label }}</span>
+    {%- else -%}
+      <a class="lang-switcher-item" href="{{ sibling.url | relative_url }}" hreflang="{{ sibling.lang }}">{{ sibling_label }}</a>
+    {%- endif -%}
+  {% endfor %}
+</nav>
+{% elsif page.translation_key %}
+  <p class="lang-switcher-note">{{ t.switcher.unavailable }}</p>
+{% endif %}

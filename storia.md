@@ -1,4 +1,6 @@
 ---
+lang: it
+translation_key: storia
 layout: default
 title: La Storia
 ---

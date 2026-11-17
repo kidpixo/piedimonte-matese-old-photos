@@ -7,6 +7,10 @@ baseurl:             '/piedimonte-matese-old-photos'  # Empty if deployed at roo
 
 permalink:           pretty
 
+# ADR-010: language assumed when a page declares no `lang`. Must match
+# DEFAULT_LANG in scripts/process_research.py and a key of _data/i18n.yml.
+default_lang:        it
+
 # About/contact
 author:
   name:              Mario D'Amore
@@ -36,6 +40,13 @@ cdn_libs:
   leaflet_locate_css: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.css"
   leaflet_locate_js: "https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.83.1/L.Control.Locate.min.js"
 
+  # Leaflet fullscreen plugin (mapbox)
+  leaflet_fullscreen_js: "https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js"
+  leaflet_fullscreen_css: "https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css"
+
+  # Mermaid diagrams (ESM)
+  mermaid: "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
+
   # DataTables 2.x with Bootstrap 5 (no jQuery required)
   datatables_css: "https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.min.css"
   datatables_js: "https://cdn.datatables.net/2.2.2/js/dataTables.min.js"
@@ -47,14 +58,36 @@ collections:
     permalink: /photos/:slug/
   topics:
     output: true
-    permalink: /topics/:slug/
+    # ADR-010: the folder carries the URL, so translations need no per-file permalink.
+    # _topics/topics/x.md -> /topics/x/ ; _topics/en/topics/x.md -> /en/topics/x/
+    # Every topic file must therefore live under a segment folder, not at the
+    # collection root. `:path` does not slugify: keep filenames URL-safe.
+    permalink: /:path/
 
-# Explicitly exclude the raw data so Jekyll doesn't try to build it
+# Files Jekyll must neither build nor watch. Two different reasons live here:
+#   * data and tooling that are not site content (raw_data, scripts, tests);
+#   * dot-directories, which Jekyll already skips when reading but still *watches*,
+#     so editing `.ai/01_STRUCTURE.md` would otherwise trigger a pointless rebuild.
 exclude:
   - archive/
   - raw_data/
   - scripts/
+  - tests/
   - vendor/
+  - .ai/
+  - .agents/
+  # Repo documentation: it used to be published as /README.md, /AGENTS/, /LICENSE.md
+  - README.md
+  - AGENTS.md
+  - LICENSE.md
+  # Build and tooling files with no business in _site
   - Makefile
   - Dockerfile
   - docker-compose.yml
+  - docker-compose_dev.yml
+  - docker-entrypoint.sh
+  - Gemfile
+  - Gemfile.lock
+  - pytest.ini
+  - requirements.txt
+  - tags
