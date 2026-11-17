@@ -14,6 +14,7 @@ Inspired by convert_photos_coords.py for location/GeoJSON processing.
 import logging
 import pathlib
 import re
+import datetime
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 import yaml
@@ -70,6 +71,19 @@ GEOMETRY_KEYS_TO_REMOVE = {
 }
 # Required frontmatter fields
 REQUIRED_FIELDS = {"title", "date", "location", "labels"}
+
+# JSON Schema for raw_data frontmatter (ADR-008). Loaded lazily so the module
+# works without jsonschema installed (validation is skipped with a warning).
+SCHEMA_PATH = RAW_DATA_DIR / "schema.json"
+
+# Languages (ADR-010). The URL language comes from the folder layout:
+#   _topics/topics/x.md      -> default language, URL /topics/x/
+#   _topics/en/topics/x.md   -> English,          URL /en/topics/x/
+DEFAULT_LANG = "it"
+SUPPORTED_LANGS = {"it", "en", "de"}
+# Repository documentation that happens to live at the repo root. It is not site
+# content and must stay out of the translation graph.
+NON_PAGE_MARKDOWN = {"README.md", "LICENSE.md", "AGENTS.md", "CONTRIBUTING.md", "CHANGELOG.md"}
 
 # Setup logging
 def setup_logging(level=logging.INFO):
@@ -483,6 +497,63 @@ def validate_frontmatter(post: frontmatter.Post, filepath: pathlib.Path) -> Tupl
     return True, ""
 
 
+# ============================================================================
+# JSON Schema Validation (ADR-008)
+# ============================================================================
+
+def _json_default(obj: Any) -> Any:
+    """Serialize YAML-parsed types (datetime.date) for JSON Schema validation."""
+    if isinstance(obj, datetime.date):
+        return {"year": obj.year, "month": obj.month, "day": obj.day}
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
+def load_frontmatter_schema() -> Optional[Dict]:
+    """Load raw_data/schema.json; returns None when unavailable."""
+    try:
+        import jsonschema  # noqa: F401
+    except ImportError:
+        logger.warning(
+            "jsonschema not installed; frontmatter schema validation skipped "
+            "(pip install jsonschema)"
+        )
+        return None
+
+    if not SCHEMA_PATH.exists():
+        logger.warning(f"Schema file not found, schema validation skipped: {SCHEMA_PATH}")
+        return None
+
+    try:
+        with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+            schema = json.load(f)
+        jsonschema.Draft202012Validator.check_schema(schema)
+        return schema
+    except Exception as e:
+        logger.error(f"Invalid frontmatter schema {SCHEMA_PATH.name}: {e}")
+        return None
+
+
+def validate_schema(metadata: Dict, schema: Dict, filepath: pathlib.Path) -> List[str]:
+    """Validate frontmatter metadata against the JSON Schema.
+
+    Returns a list of error messages (empty when valid).
+    """
+    import jsonschema
+
+    try:
+        meta = json.loads(json.dumps(metadata, default=_json_default))
+    except TypeError as e:
+        return [f"{filepath.name}: frontmatter not serializable for schema validation: {e}"]
+
+    validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+    errors = []
+    for err in sorted(validator.iter_errors(meta), key=str):
+        path = "/".join(str(p) for p in err.absolute_path)
+        location = f"{filepath.name}: {path}" if path else f"{filepath.name}:"
+        errors.append(f"{location} {err.message}")
+    return errors
+
+
 def normalize_images_from_metadata(metadata: Dict) -> List[Dict[str, Any]]:
     """Normalize image schema to a single list format.
 
@@ -834,6 +905,8 @@ def summarize_check_report(report: Dict, json_output: bool) -> None:
     logger.info(f"expected_topic_geojson_files={report['stats']['expected_topic_geojson_files']}")
     logger.info(f"expected_generated_images={report['stats']['expected_generated_images']}")
     logger.info(f"expected_generated_thumbs={report['stats']['expected_generated_thumbs']}")
+    logger.info(f"i18n_pages_checked={report['stats']['i18n_pages_checked']}")
+    logger.info(f"i18n_translation_keys={report['stats']['i18n_translation_keys']}")
     logger.info(f"errors={len(report['errors'])} warnings={len(report['warnings'])}")
 
     logger.info("-- raw_data/*.md --")
@@ -851,6 +924,128 @@ def summarize_check_report(report: Dict, json_output: bool) -> None:
         logger.warning("-- Warnings --")
         for msg in report["warnings"]:
             logger.warning(msg)
+
+
+def iter_topic_files() -> List[pathlib.Path]:
+    """All topic markdown files, at any depth.
+
+    Recursive so language subfolders (ADR-010: `_topics/en/topics/x.md`) are seen;
+    a non-recursive glob would silently find zero topics after the move.
+    """
+    if not TOPICS_DIR.exists():
+        return []
+    return sorted(p for p in TOPICS_DIR.rglob("*.md") if p.is_file())
+
+
+def topic_lang_from_path(topic_path: pathlib.Path) -> str:
+    """Language implied by a topic file's folder (`_topics/en/...` -> 'en')."""
+    try:
+        parts = topic_path.parent.relative_to(TOPICS_DIR).parts
+    except ValueError:
+        return DEFAULT_LANG
+    if parts and parts[0] in SUPPORTED_LANGS:
+        return parts[0]
+    return DEFAULT_LANG
+
+
+def iter_page_files() -> List[pathlib.Path]:
+    """Standalone pages: repo-root *.md plus root-level language folders (en/, de/).
+
+    Repo documentation (README, AGENTS, …) is not site content and is skipped.
+    """
+    files = [p for p in PROJECT_ROOT.glob("*.md") if p.name not in NON_PAGE_MARKDOWN]
+    for lang in sorted(SUPPORTED_LANGS - {DEFAULT_LANG}):
+        lang_dir = PROJECT_ROOT / lang
+        if lang_dir.is_dir():
+            files.extend(p for p in lang_dir.glob("*.md") if p.name not in NON_PAGE_MARKDOWN)
+    return sorted(set(files))
+
+
+def page_lang_from_path(path: pathlib.Path) -> str:
+    """Language implied by a standalone page's folder (`en/storia.md` -> 'en')."""
+    parts = path.relative_to(PROJECT_ROOT).parts
+    if len(parts) > 1 and parts[0] in SUPPORTED_LANGS:
+        return parts[0]
+    return DEFAULT_LANG
+
+
+def audit_i18n_for_check() -> Dict[str, Any]:
+    """Translation-graph audit (ADR-010).
+
+    Owns three rules for every page and topic file:
+      * `lang` is present and supported;
+      * `lang` agrees with the folder the file lives in;
+      * pages grouped by `translation_key` have no duplicate language and always
+        include the default language, so the switcher can fall back.
+
+    A page without `translation_key` is monolingual by design (e.g. technical.md)
+    and is exempt from the grouping rules.
+    """
+    results: Dict[str, Any] = {
+        "pages_checked": 0,
+        "translation_keys": 0,
+        "errors": [],
+        "warnings": [],
+    }
+
+    topic_files = set(iter_topic_files())
+    all_files = sorted(set(iter_page_files()) | topic_files)
+    groups: Dict[str, List[Tuple[str, str]]] = {}
+
+    for path in all_files:
+        try:
+            post = frontmatter.load(path)
+        except Exception as e:
+            results["errors"].append(f"{path.name}: failed to read frontmatter: {e}")
+            continue
+
+        results["pages_checked"] += 1
+        rel = path.relative_to(PROJECT_ROOT).as_posix()
+        declared = post.metadata.get("lang")
+        if declared is None:
+            results["errors"].append(f"{rel}: missing 'lang' frontmatter (ADR-010)")
+            continue
+
+        lang = str(declared)
+        if lang not in SUPPORTED_LANGS:
+            results["errors"].append(
+                f"{rel}: unsupported lang '{lang}' (supported: {sorted(SUPPORTED_LANGS)})"
+            )
+            continue
+
+        expected = (
+            topic_lang_from_path(path) if path in topic_files else page_lang_from_path(path)
+        )
+        key = post.metadata.get("translation_key")
+
+        # An explicit language folder is always binding. A monolingual page (no
+        # translation_key) sitting in the default location may declare any language
+        # — that is how an English-only page like technical.md lives at /technical/.
+        if lang != expected and (key is not None or expected != DEFAULT_LANG):
+            results["errors"].append(
+                f"{rel}: lang '{lang}' disagrees with folder language '{expected}'"
+            )
+
+        if key is None:
+            continue
+        groups.setdefault(str(key), []).append((lang, rel))
+
+    for key, members in sorted(groups.items()):
+        results["translation_keys"] += 1
+        langs = [lang for lang, _ in members]
+        duplicates = sorted({lang for lang in langs if langs.count(lang) > 1})
+        if duplicates:
+            results["errors"].append(
+                f"translation_key '{key}' has duplicate languages {duplicates}: "
+                f"{[rel for _, rel in members]}"
+            )
+        if DEFAULT_LANG not in langs:
+            results["errors"].append(
+                f"translation_key '{key}' has no {DEFAULT_LANG} (default-language) page: "
+                f"{[rel for _, rel in members]}"
+            )
+
+    return results
 
 
 def expected_topic_geojson_files(topic_slug: str) -> List[pathlib.Path]:
@@ -876,7 +1071,7 @@ def audit_topics_for_check(raw_slugs: set, photos_slugs: set) -> Dict[str, Any]:
     if not TOPICS_DIR.exists():
         return results
 
-    topic_files = sorted(TOPICS_DIR.glob("*.md"))
+    topic_files = iter_topic_files()
     results["topics_md_files"] = len(topic_files)
 
     for topic_path in topic_files:
@@ -1019,6 +1214,8 @@ def run_check_mode(
                 "expected_topic_geojson_files": 0,
                 "expected_generated_images": 0,
                 "expected_generated_thumbs": 0,
+                "i18n_pages_checked": 0,
+                "i18n_translation_keys": 0,
             },
             "raw_md": [],
             "errors": [],
@@ -1026,6 +1223,8 @@ def run_check_mode(
         }
 
         logger.info(f"Check: scanning {len(raw_md_files)} raw_data/*.md files")
+
+        schema = load_frontmatter_schema()
 
         for filepath in raw_md_files:
             item = {
@@ -1047,6 +1246,9 @@ def run_check_mode(
             is_valid, msg = validate_frontmatter(post, filepath)
             if not is_valid:
                 report["errors"].append(msg)
+
+            if schema is not None:
+                report["errors"].extend(validate_schema(metadata, schema, filepath))
 
             location_data = normalize_location_data(metadata.get("location"))
             coords = extract_coords_from_location(location_data)
@@ -1099,6 +1301,12 @@ def run_check_mode(
         report["stats"]["topics_with_featured"] = topic_audit["topics_with_featured"]
         report["errors"].extend(topic_audit["errors"])
         report["warnings"].extend(topic_audit["warnings"])
+
+        i18n_audit = audit_i18n_for_check()
+        report["stats"]["i18n_pages_checked"] = i18n_audit["pages_checked"]
+        report["stats"]["i18n_translation_keys"] = i18n_audit["translation_keys"]
+        report["errors"].extend(i18n_audit["errors"])
+        report["warnings"].extend(i18n_audit["warnings"])
 
         actual_topic_geojson: set[pathlib.Path] = set()
         if TOPIC_MAPS_DIR.exists():
@@ -1405,13 +1613,20 @@ def build_photo_geo_feature_index(all_metadata: List[Dict]) -> Dict[str, Dict[st
 
 
 def load_topic_featured_ids() -> List[Dict[str, Any]]:
-    """Load topic slugs and featured photo IDs from _topics/*.md frontmatter."""
+    """Load topic slugs and featured photo IDs from topic frontmatter.
+
+    Topic GeoJSON is language-neutral geometry, so translations of one topic
+    (same slug in different language folders) share a single output directory.
+    The default-language entry wins; divergent `featured_photos` between
+    translations is reported as a warning.
+    """
     topics: List[Dict[str, Any]] = []
     if not TOPICS_DIR.exists():
         logger.info(f"Topics directory not found, skipping topic maps: {TOPICS_DIR}")
         return topics
 
-    for topic_path in sorted(TOPICS_DIR.glob("*.md")):
+    by_slug: Dict[str, Dict[str, Any]] = {}
+    for topic_path in iter_topic_files():
         try:
             with open(topic_path, "r", encoding="utf-8") as f:
                 post = frontmatter.load(f)
@@ -1431,12 +1646,33 @@ def load_topic_featured_ids() -> List[Dict[str, Any]]:
         if not featured_ids:
             continue
 
-        topics.append({
-            "slug": topic_path.stem,
-            "path": topic_path,
-            "featured_ids": featured_ids,
-        })
+        slug = topic_path.stem
+        lang = topic_lang_from_path(topic_path)
+        entry = by_slug.get(slug)
+        if entry is None:
+            by_slug[slug] = {
+                "slug": slug,
+                "path": topic_path,
+                "lang": lang,
+                "featured_ids": featured_ids,
+            }
+            continue
 
+        if entry["featured_ids"] != featured_ids:
+            logger.warning(
+                f"Topic '{slug}' translations disagree on featured_photos "
+                f"({entry['lang']}: {entry['featured_ids']} vs {lang}: {featured_ids}); "
+                f"using {entry['lang']}"
+            )
+        if lang == DEFAULT_LANG and entry["lang"] != DEFAULT_LANG:
+            by_slug[slug] = {
+                "slug": slug,
+                "path": topic_path,
+                "lang": lang,
+                "featured_ids": featured_ids,
+            }
+
+    topics = list(by_slug.values())
     return topics
 
 

@@ -5,6 +5,7 @@
 python-frontmatter>=1.0.0
 Pillow>=10.0.0
 PyYAML>=6.0
+jsonschema>=4.20.0
 
 # GeoJSON & spatial processing
 geopandas>=0.14.0
