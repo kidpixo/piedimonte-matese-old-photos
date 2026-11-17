@@ -21,4 +21,4 @@ Guidance, not rules. These evolve as the project matures.
 - Fully regenerating `_photos/` on each build instead of incremental updates (except `changed` mode) to keep the pipeline simple
 - CDN dependence (pinned, SRI-checked) instead of vendoring libraries
 
-_Last updated: 2026-10-31 @ 0c053d5_
+_Last updated: 2026-11-01 @ 7391398_

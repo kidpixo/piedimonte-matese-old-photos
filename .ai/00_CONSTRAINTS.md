@@ -5,7 +5,7 @@ Hard rules. Non-negotiable unless an ADR with a `Waiver:` field explicitly overr
 - Must use: Jekyll (Lanyon-based) for site generation — Reason: existing site and theme
 - Must use: Ruby 3.2 (not 3.3) for Jekyll — Reason: Jekyll 3.9.3 incompatible with the Ruby 3.3 Logger API; 3.3 broke all Docker builds (2026-02 lesson)
 - Must use: Python 3.11+ with geopandas/shapely for geometry work — Reason: framework serializers (GeoDataFrame `.to_file`) handle geometries; manual JSON construction silently produced empty FeatureCollections (2026-02 lesson)
-- Must use: conda env `cotonificio` to run Python (`python <script>.py`) — Reason: reproducible local environment
+- Must use: conda env `cotonificio` for **every** project command — Python scripts, `pytest` / `make test`, and `make` targets. Activate with `source ~/miniconda3/etc/profile.d/conda.sh && conda activate cotonificio` — Reason: reproducible local environment. The host Python lacks `python-frontmatter`, and `scripts/process_research.py` calls `exit(1)` on that ImportError, so running outside the env crashes pytest with an INTERNALERROR and zero tests collected — a broken environment, not a broken test.
 
 ## Forbidden Technologies
 - Never use: npm/bundler for front-end dependencies — Reason: GitHub Pages static hosting; all external libraries via pinned CDN URLs (see `_config.yml` `cdn_libs`)
@@ -29,4 +29,4 @@ Human-set: Map threshold, Cap overrides. Agent-written: Setup, Spec version.
 - Setup: done 2026-10-31
 - Spec version: 2
 
-_Last updated: 2026-10-31 @ 0c053d5_
+_Last updated: 2026-11-17 @ 7391398_

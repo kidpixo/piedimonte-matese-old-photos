@@ -21,4 +21,4 @@
 - Phase 3.7: Topic-specific GeoJSON filtering (hybrid build-time + runtime fallback) — completed 2026-03-18
 - Phase 5: Asset migration (`public/` → `assets/`) — completed 2026-03
 
-_Last updated: 2026-10-31 @ 0c053d5_
+_Last updated: 2026-11-01 @ 7391398_

@@ -1,5 +1,5 @@
 # ADR-008: Raw-data frontmatter schema
-- **Status:** Proposed
+- **Status:** Active
 - **Date:** 2026-10-31
 - **Scope:** `scripts/**`, `raw_data/**`, `.ai/decisions/ADR-007*` (baseline prerequisite)
 - **Author:** human

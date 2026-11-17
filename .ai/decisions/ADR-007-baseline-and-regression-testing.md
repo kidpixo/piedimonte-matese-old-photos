@@ -1,5 +1,5 @@
 # ADR-007: Baseline and regression testing
-- **Status:** Proposed
+- **Status:** Active
 - **Date:** 2026-10-31
 - **Scope:** `tests/**`, `scripts/**`, `Makefile`
 - **Author:** human

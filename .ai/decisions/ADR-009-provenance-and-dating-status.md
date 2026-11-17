@@ -1,5 +1,5 @@
 # ADR-009: Provenance and dating-status fields
-- **Status:** Proposed
+- **Status:** Active
 - **Date:** 2026-10-31
 - **Scope:** `raw_data/**`, `scripts/**`, `.ai/decisions/ADR-008*` (schema prerequisite)
 - **Author:** human
